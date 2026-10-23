@@ -1,0 +1,2045 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d6b51"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Listings"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script>window.__STANDALONE=true;</script>
+</head><body>
+<title>Pocket Listings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-column phone app — app bar, filter rail, card list, full-screen detail/edit, bottom share drawer */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --sunk:#e8ecea; --fg:#14201b; --muted:#5b6b64; --line:#d5ddd9;
+  --accent:#1d6b51; --accent-fg:#ffffff; --accent-soft:#dcefe6;
+  --amber:#a8650b; --amber-soft:#fbecd3; --red:#b3362b; --red-soft:#f8dedb; --grey-soft:#e3e7e5;
+  --wa:#1a8f4e;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --surface:#18211d; --sunk:#202b26; --fg:#e6eeea; --muted:#94a59d; --line:#2c3a34;
+  --accent:#5cc49b; --accent-fg:#06231a; --accent-soft:#1d3a2e;
+  --amber:#e7a748; --amber-soft:#3a2b14; --red:#ef7f73; --red-soft:#3d1f1c; --grey-soft:#26302c; --wa:#3ccf7d;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#18211d; --sunk:#202b26; --fg:#e6eeea; --muted:#94a59d; --line:#2c3a34;
+  --accent:#5cc49b; --accent-fg:#06231a; --accent-soft:#1d3a2e;
+  --amber:#e7a748; --amber-soft:#3a2b14; --red:#ef7f73; --red-soft:#3d1f1c; --grey-soft:#26302c; --wa:#3ccf7d;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+
+/* app bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:grid;gap:12px}
+.bar-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{font-size:24px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;height:40px;min-width:40px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:13px}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* summary strip */
+.tally{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:var(--r);background:var(--surface);margin:4px 0 14px}
+.tally div{padding:10px 12px}
+.tally div+div{border-left:1px solid var(--line)}
+.tally b{display:block;font-size:20px}
+
+/* cards */
+.list{display:grid;gap:10px}
+.card{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:start;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+.thumb{width:84px;height:84px;border-radius:10px;background:var(--sunk);overflow:hidden;display:grid;place-items:center;font-family:var(--display);font-weight:700;color:var(--muted);font-size:18px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.card-body{min-width:0;display:grid;gap:3px}
+.card-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.card h3{font-size:16px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-top h3{min-width:0;flex:1}
+.card-top{min-width:0}
+.tm-layer img{color:transparent}
+.card{min-width:0;overflow:hidden}
+.where{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.price{font-size:16px;font-weight:500}
+.specs{display:flex;flex-wrap:wrap;gap:4px 10px;color:var(--muted);font-size:12.5px}
+.pill{flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.s-active{background:var(--accent-soft);color:var(--accent)}
+.s-under_offer{background:var(--amber-soft);color:var(--amber)}
+.s-sold,.s-rented{background:var(--grey-soft);color:var(--muted)}
+.s-expired{background:var(--red-soft);color:var(--red)}
+.tag-ex{font-size:10px;font-weight:700;color:var(--amber);border:1px dashed var(--amber);border-radius:6px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:28px 20px;text-align:center;display:grid;gap:10px;justify-items:center;color:var(--muted)}
+.empty h2{color:var(--fg);font-size:20px}
+.btn{border:0;border-radius:12px;height:46px;padding:0 18px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:var(--accent-fg)}
+.btn-ghost{background:var(--surface);border:1px solid var(--line)}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-danger{background:var(--red-soft);color:var(--red)}
+.btn:disabled{opacity:.55;cursor:default}
+.fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:6;height:56px;border-radius:18px;padding:0 20px;box-shadow:0 8px 24px rgb(0 0 0 / .18)}
+.note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:16px}
+
+/* screens */
+.screen{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
+.screen-bar{position:sticky;top:0;z-index:2;background:var(--bg);display:flex;align-items:center;gap:10px;padding-block:10px;border-bottom:1px solid var(--line)}
+.screen-bar h2{font-size:17px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero{margin-top:14px;border-radius:var(--r);overflow:hidden;background:var(--sunk);aspect-ratio:16/10;max-width:100%;display:grid;place-items:center;position:relative}
+.hero img{width:100%;height:100%;object-fit:cover}
+.hero .ph{font-family:var(--display);font-size:42px;font-weight:700;color:var(--muted)}
+.strip{display:flex;gap:6px;overflow-x:auto;margin-top:6px}
+.strip button{flex:none;padding:0;border:2px solid transparent;border-radius:10px;background:none;line-height:0}
+.strip button.on{border-color:var(--accent)}
+.strip img{width:64px;height:48px;object-fit:cover;border-radius:8px;display:block}
+.hero{touch-action:pan-y}
+.ph-count{position:absolute;right:10px;bottom:10px;background:rgb(0 0 0 / .55);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.ph-main{position:absolute;left:10px;bottom:10px;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.04em}
+.main-row{margin-top:8px}
+.pinned{color:var(--accent);font-weight:600}
+.pin-box{display:grid;gap:8px}
+.pin-on{display:flex;align-items:center;gap:10px;background:var(--accent-soft);border-radius:12px;padding:10px 12px}
+.pin-on span:last-child{display:grid}
+.pin-on small{color:var(--muted)}
+#brBtn.busy,#scanBtn.busy{opacity:.6;pointer-events:none}
+.scan-card{display:grid;gap:10px;background:var(--accent-soft);border-radius:var(--r);padding:14px}
+.scan-card b{font-family:var(--display);font-size:16px;display:block}
+.scan-card small{color:var(--muted);font-size:13px}
+.scan-unit{width:100%;min-width:0;height:42px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 12px}
+#scanNote:empty{display:none}
+.ai-filled input,.ai-filled select,.ai-filled textarea,textarea.ai-filled,input.ai-filled{border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent-soft)}
+.sortgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sortb{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 8px;font-weight:600;font-size:13.5px;text-align:left}
+.sortb[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.sortb:first-child{grid-column:1/-1}
+.chip-sort{background:var(--accent)!important;color:var(--accent-fg)!important;border-color:var(--accent)!important}
+#pinmap{overflow:hidden}
+.tm-wrap{display:flex;flex-direction:column;height:100%;max-width:760px;margin:0 auto}
+.tm-top{display:flex;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tm-top h2{font-size:17px;flex:1}
+.tm-search{display:flex;gap:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 8px;margin:0}
+.tm-search input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 12px}
+.tm-results{display:grid;max-height:40%;overflow:auto;border-top:1px solid var(--line);background:var(--surface)}
+.tm-results[hidden]{display:none}
+.tm-results button{border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:10px 16px;font-size:13.5px}
+.tm-map{position:relative;flex:1;min-height:200px;overflow:hidden;background:#dfe5e2;touch-action:none;cursor:grab}
+.tm-layer{position:absolute;inset:0;transform-origin:50% 50%}
+.tm-layer img{position:absolute;left:0;top:0;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-select:none;pointer-events:none}
+.tm-layer img.lab{z-index:1}
+.tm-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 4px rgb(0 0 0 / .35));z-index:3}
+.tm-ctl{position:absolute;right:12px;top:12px;display:grid;gap:8px;z-index:4}
+.tm-b{width:44px;height:44px;border-radius:12px;border:0;background:#fff;color:#14201b;font-size:22px;font-weight:700;box-shadow:0 2px 8px rgb(0 0 0 / .25)}
+.tm-seg{position:absolute;left:12px;top:12px;display:flex;background:#fff;border-radius:12px;padding:3px;gap:3px;box-shadow:0 2px 8px rgb(0 0 0 / .25);z-index:4}
+.tm-seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font-weight:700;font-size:13px;color:#5b6b64}
+.tm-seg button[aria-pressed="true"]{background:#14201b;color:#fff}
+.tm-attr{position:absolute;right:4px;bottom:4px;background:rgb(255 255 255 / .8);color:#333;font-size:10px;padding:1px 5px;border-radius:4px;z-index:4}
+.tm-foot{display:grid;gap:2px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(env(safe-area-inset-bottom,0px) + 12px);border-top:1px solid var(--line)}
+.tm-foot small{color:var(--muted)}
+.soc-list{display:grid;gap:8px}
+.soc-item{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;width:100%}
+.soc-ic{font-size:26px;flex:none;width:36px;text-align:center}
+.soc-txt{display:grid;gap:2px;min-width:0;flex:1}
+.soc-txt small{color:var(--muted);font-size:12.5px}
+.soc-go{color:var(--muted);font-size:22px;flex:none}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.ptile{position:relative;padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:var(--sunk);opacity:.55}
+.ptile.on{border-color:var(--accent);opacity:1}
+.ptile img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.pnum{position:absolute;right:6px;top:6px;min-width:24px;height:24px;border-radius:12px;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:13px;line-height:24px;padding:0 6px}
+.cardprev{width:min(100%,280px);margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgb(0 0 0 / .18)}
+.cardprev[hidden]{display:none}
+.cardprev canvas{width:100%;height:auto;display:block}
+.hero{cursor:zoom-in}
+.ph-zoom{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;background:rgb(0 0 0 / .5);color:#fff;display:grid;place-items:center;font-size:16px;pointer-events:none}
+#viewer[hidden]{display:none}
+#viewer:not([hidden]){position:fixed;inset:0;z-index:90;background:#000;color:#fff;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.vw-stage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+.vw-stage img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;-webkit-user-drag:none}
+.vw-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:10px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));background:linear-gradient(rgb(0 0 0 / .6),transparent);z-index:2}
+.vw-count{font-weight:700;font-size:14px}
+.vw-btn{width:44px;height:44px;border-radius:50%;border:0;background:rgb(255 255 255 / .16);color:#fff;font-size:22px;line-height:44px;padding:0}
+.vw-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2}
+.vw-prev{left:max(10px,env(safe-area-inset-left,0px))}
+.vw-next{right:max(10px,env(safe-area-inset-right,0px))}
+.vw-hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);text-align:center;font-size:12.5px;color:rgb(255 255 255 / .7);z-index:2}
+.loc{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;padding-block:4px}
+.loc span:nth-child(2){min-width:0;overflow-wrap:anywhere}
+.loc-go{margin-left:auto;flex:none;color:var(--accent);font-weight:700;font-size:13px}
+.map-btn{width:100%;text-decoration:none;color:var(--fg)}
+.map-note{color:var(--muted);font-size:12.5px}
+.main-row .btn{height:40px;font-size:14px;width:100%}
+body.client .main-row{display:none}
+.ephotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ep{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--sunk)}
+.ep.is-main{border:2px solid var(--accent)}
+.ep img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.ep-tag{position:absolute;left:6px;top:6px;background:var(--accent);color:var(--accent-fg);font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.04em}
+.ep-x{position:absolute;right:4px;top:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgb(0 0 0 / .6);color:#fff;font-size:16px;line-height:28px;padding:0}
+.ep-ctl{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line);background:var(--surface)}
+.ep-ctl button{border:0;background:none;height:34px;font-size:16px;font-weight:700;color:var(--muted);padding:0}
+.ep-ctl button+button{border-left:1px solid var(--line)}
+.ep-ctl button[aria-pressed="true"]{color:var(--accent)}
+.ep-ctl button:disabled{opacity:.3}
+.d-head{display:grid;gap:4px;margin:16px 0 12px}
+.d-head h2{font-size:24px}
+.d-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px}
+.d-price .big{font-size:26px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.grid div{background:var(--surface);padding:10px 12px;min-width:0}
+.grid b{display:block;font-weight:600;overflow-wrap:anywhere}
+.sec{margin-top:18px;display:grid;gap:8px}
+.sec p{margin:0;white-space:pre-wrap}
+.private{background:var(--amber-soft);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px}
+.private .lbl{color:var(--amber)}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{color:var(--accent);font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--surface)}
+.d-actions{position:sticky;bottom:0;background:var(--bg);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-block:12px calc(env(safe-area-inset-bottom,0px) + 12px);border-top:1px solid var(--line);margin-top:22px}
+
+/* form */
+form{display:grid;gap:18px;padding-block:16px 30px}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:10px}
+legend{font-family:var(--display);font-weight:700;font-size:17px;margin-bottom:6px;padding:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.f{display:grid;gap:4px;min-width:0}
+.f span{font-size:12.5px;color:var(--muted);font-weight:600}
+.f input,.f select,.f textarea{width:100%;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;height:44px}
+.f textarea{height:auto;min-height:84px;resize:vertical}
+.f.priv span{color:var(--amber)}
+.f.priv textarea{background:var(--amber-soft);border-color:transparent}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;z-index:30;background:rgb(0 0 0 / .4)}
+.drawer{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--surface);border-radius:20px 20px 0 0;max-height:88%;overflow-y:auto;padding-block:8px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.drawer-in{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:12px}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 6px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--sunk);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+.msg{width:100%;min-height:240px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px;font-family:var(--body);font-size:14px;line-height:1.5;resize:vertical}
+.ai-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ai-row small{color:var(--muted);flex:1;min-width:160px}
+.send-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* social video */
+.vthumbs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:40px}
+.vthumb{position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line);padding:0;background:var(--sunk)}
+.vthumb img{width:100%;height:100%;object-fit:cover}
+.vthumb span{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgb(0 0 0 / .6);color:#fff;font-size:14px;line-height:20px}
+.vstage{margin:16px auto 8px;width:min(100%,300px);aspect-ratio:9/16;max-width:100%;border-radius:16px;overflow:hidden;background:#0c2e23;box-shadow:0 10px 30px rgb(0 0 0 / .2)}
+.vstage canvas,.vstage video{width:100%;height:100%;display:block;object-fit:cover}
+.vprog{height:4px;border-radius:4px;background:var(--sunk);overflow:hidden;width:min(100%,300px);margin:0 auto 12px}
+.vprog div{height:100%;width:0;background:var(--accent)}
+label.btn{cursor:pointer}
+/* settings */
+.bar-btns{display:flex;gap:6px;flex:none}
+#clientBtn[aria-pressed="true"]{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.set-sec{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:14px}
+.set-sec h3{font-size:16px}
+.set-hint{margin:0;color:var(--muted);font-size:13px}
+.set-item{display:grid;gap:8px}
+.set-lbl{font-size:13px;font-weight:600;color:var(--muted)}
+.set-tog{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.set-tog span{display:grid;gap:2px;min-width:0}
+.set-tog small{color:var(--muted);font-size:12.5px;font-weight:400}
+.set-tog input{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer}
+.set-tog input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25)}
+.set-tog input:checked{background:var(--accent)}
+.set-tog input:checked::after{transform:translateX(18px)}
+@media (prefers-reduced-motion:no-preference){.set-tog input,.set-tog input::after{transition:all .15s}}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 12px 5px 6px;font-weight:600;font-size:13px}
+.sw i{width:20px;height:20px;border-radius:50%;display:block}
+.sw[aria-pressed="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.seg+.seg{margin-top:6px}
+body.compact .card{grid-template-columns:56px 1fr;padding:8px;gap:10px}
+body.compact .thumb{width:56px;height:56px;font-size:14px}
+body.compact .specs{display:none}
+body.compact .list{gap:6px}
+body.client .private,body.client [data-edit],body.client #delBtn,body.client .fab,body.client #profileBtn,body.client #loadSamples{display:none!important}
+#lock[hidden]{display:none}
+#lock:not([hidden]){position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lock-in{width:min(100%,320px);display:grid;gap:14px;justify-items:center;text-align:center}
+.lock-in h2{font-size:20px}
+.lock-brand{font-family:var(--display);font-weight:700;color:var(--accent)}
+.dots{display:flex;gap:14px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--fg)}
+.dots i.on{background:var(--fg)}
+.lock-msg{min-height:1.4em;color:var(--red);margin:0;font-size:14px}
+.keys{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.keys button{width:72px;height:72px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:26px}
+.keys .k-sm{font-size:15px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 90px);z-index:50;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+@media (max-width:380px){.grid{grid-template-columns:repeat(2,1fr)}.row3{grid-template-columns:1fr 1fr}}
+/* leads */
+.leadbar{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:4px 0 10px}
+.leadbar .lb-ic{font-size:20px;flex:none}
+.leadbar .lb-txt{display:grid;gap:1px;min-width:0;flex:1}
+.leadbar .lb-txt small{color:var(--muted);font-size:12.5px}
+.leadbar .lb-go{color:var(--muted);font-size:20px;flex:none}
+.due-pill{flex:none;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--red-soft);color:var(--red);text-transform:uppercase;letter-spacing:.04em}
+.ld-tally{margin-top:14px}
+.ld-tally .due b{color:var(--red)} .ld-tally .hot b{color:var(--amber)}
+.ld-tip{margin:0 0 10px}
+.ld-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;min-width:0}
+.ld-card.isdue{box-shadow:inset 4px 0 0 var(--red)}
+.ld-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ld-top>div{min-width:0}
+.ld-name{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.ld-meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.ld-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ld-tag{font-size:12px;background:var(--sunk);padding:3px 8px;border-radius:6px}
+.ld-notes{font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.ld-when{font-size:13px;font-weight:600;color:var(--muted)}
+.ld-when.d{color:var(--red)} .ld-when.t{color:var(--amber)}
+.ld-acts{display:flex;flex-wrap:wrap;gap:6px}
+.ld-acts .btn{height:38px;font-size:13px;padding:0 12px;text-decoration:none}
+.ld-acts a.btn-ghost{color:var(--fg)}
+.ld-acts select{height:38px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:0 8px;font-weight:600;font-size:13px}
+.st-New{background:var(--amber-soft);color:var(--amber)} .st-Contacted{background:var(--grey-soft);color:var(--muted)}
+.st-Viewing,.st-Negotiating{background:var(--accent-soft);color:var(--accent)} .st-Hot{background:var(--red-soft);color:var(--red)}
+.st-Closed{background:var(--accent);color:var(--accent-fg)} .st-Lost{background:var(--grey-soft);color:var(--muted)}
+body.client #leadsBtn,body.client #leads{display:none!important}
+.q-prog{display:grid;gap:6px}
+.q-bar{height:6px;border-radius:6px;background:var(--sunk);overflow:hidden}
+.q-bar i{display:block;height:100%;background:var(--accent)}
+.q-item{display:grid;gap:6px;padding-block:12px;border-top:1px solid var(--line)}
+.q-item>b{font-size:15px}
+.q-hint{font-size:12.5px;color:var(--muted);font-style:italic;margin:0}
+.q-chips{display:flex;flex-wrap:wrap;gap:6px}
+.q-chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 13px;font-weight:600;font-size:13.5px}
+.q-chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.q-in{width:100%;min-width:0;height:44px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 12px}
+.q-unit{display:flex;align-items:center;gap:8px}
+.q-unit span{color:var(--muted);font-weight:600;font-size:13px;flex:none}
+.q-est{background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;display:grid;gap:4px}
+.q-est small{color:var(--muted)}
+.q-save{position:sticky;bottom:0;background:var(--surface);padding-block:10px;border-top:1px solid var(--line)}
+.ld-sum{font-size:13px;color:var(--fg);overflow-wrap:anywhere}
+</style>
+
+<div class="wrap" id="home">
+  <header class="bar">
+    <div class="bar-top">
+      <div class="brand"><h1>Pocket Listings</h1><p id="sub">Opening your portfolio…</p></div>
+      <div class="bar-btns"><button class="icon-btn" id="clientBtn" aria-pressed="false">Client mode</button><button class="icon-btn" id="profileBtn">Settings</button></div>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search name, area, ref no." autocomplete="off">
+      <button class="icon-btn" id="filterBtn" aria-label="More filters">Filters</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+  <button class="leadbar" id="leadsBtn"><span class="lb-ic" aria-hidden="true">📇</span><span class="lb-txt"><b>Leads</b><small id="leadsSub">Every enquiry and when to follow up</small></span><span id="leadsDue"></span><span class="lb-go" aria-hidden="true">›</span></button>
+  <div id="tally"></div>
+  <div class="list" id="list"></div>
+  <p class="note" id="storeNote"></p>
+</div>
+<button class="btn btn-primary fab" id="addBtn">+ New listing</button>
+
+<div class="screen" id="detail" hidden></div>
+<div class="screen" id="edit" hidden></div>
+<div class="screen" id="video" hidden></div>
+<div class="screen" id="settings" hidden></div>
+<div id="lock" hidden></div>
+<div id="viewer" hidden role="dialog" aria-label="Photo viewer"></div>
+<div class="screen" id="post" hidden></div>
+<div class="screen" id="pinmap" hidden></div>
+<div class="screen" id="leads" hidden></div>
+<style id="accentCss"></style>
+<div id="drawerHost"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- constants ---------- */
+const SORTS=[["new","Newest first"],["lo","Price: low → high"],["hi","Price: high → low"],["szlo","Size: small → large"],["szhi","Size: large → small"]];
+const TYPES=["Condominium","Serviced Residence","Apartment","Terrace","Semi-D","Bungalow","Townhouse","Shop Lot","Land"];
+const STATUSES={active:"Active",under_offer:"Under offer",sold:"Sold",rented:"Rented",expired:"Expired"};
+const FURN=["Unfurnished","Partially furnished","Fully furnished"];
+const TENURE=["Freehold","Leasehold","Leasehold 99 yrs","Malay Reserve"];
+const TITLES=["Strata","Individual","Master"];
+const SAMPLES=[
+ {ref:"KLG-001",title:"Trio by Setia, Tower B",listingType:"sale",propertyType:"Serviced Residence",status:"active",price:480000,negotiable:true,area:"Bukit Tinggi",city:"Klang",state:"Selangor",builtUp:850,landArea:0,beds:3,baths:2,carparks:1,floorLevel:"Mid floor",facing:"North-east",tenure:"Freehold",titleType:"Strata",bumiLot:false,furnishing:"Partially furnished",maintenanceFee:290,facilities:"Pool, gym, 24h security, playground",highlights:"Near AEON Bukit Tinggi. Renovated kitchen, unblocked city view. Move-in condition.",internalNotes:"Owner wants quick sale, will accept RM460k. Key at guardhouse.",ownerName:"Encik Hafiz",ownerPhone:"012-345 6789",commission:"2%",photoUrls:"",videoUrl:"",mapUrl:"",sample:true},
+ {ref:"KLG-002",title:"Double-storey terrace, Bandar Botanic",listingType:"sale",propertyType:"Terrace",status:"under_offer",price:830000,negotiable:false,area:"Bandar Botanic",city:"Klang",state:"Selangor",builtUp:2100,landArea:1540,beds:4,baths:3,carparks:2,floorLevel:"",facing:"South",tenure:"Freehold",titleType:"Individual",bumiLot:false,furnishing:"Unfurnished",maintenanceFee:90,facilities:"Gated & guarded, park",highlights:"Extended kitchen, auto gate, 5 min to Botanic Avenue.",internalNotes:"Offer RM810k received 14 Oct, awaiting bank valuation.",ownerName:"Mrs Tan",ownerPhone:"016-222 1100",commission:"2.5%",photoUrls:"",videoUrl:"",mapUrl:"",sample:true},
+ {ref:"KLG-003",title:"Bayu Temasya condo",listingType:"rent",propertyType:"Condominium",status:"active",price:1600,negotiable:true,area:"Batu Unjur",city:"Klang",state:"Selangor",builtUp:1100,landArea:0,beds:3,baths:2,carparks:2,floorLevel:"High floor",facing:"West",tenure:"Leasehold 99 yrs",titleType:"Strata",bumiLot:false,furnishing:"Fully furnished",maintenanceFee:0,facilities:"Pool, gym, BBQ area",highlights:"Fully furnished with aircond in all rooms. Ready to move in 1 Nov.",internalNotes:"Deposit 2+1. Owner prefers family tenants.",ownerName:"Mr Raj",ownerPhone:"019-888 4433",commission:"1 month rent",photoUrls:"",videoUrl:"",mapUrl:"",sample:true}
+];
+
+/* ---------- app mode ---------- */
+const APP=!!window.AndroidBridge;   // true inside the Android app
+let emojiOn=true;
+const stripEmoji=t=>t.replace(/(?:[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}][\uFE0F\u200D]*)+ ?/gu,"");
+function msgSet(t){const m=$("#msg");if(m){m.value=emojiOn?t:stripEmoji(t);updateWa()}}
+const aiWaiters={};
+window.__aiCb=(id,ok,text)=>{const w=aiWaiters[id];if(!w)return;delete aiWaiters[id];ok?w.res(text):w.rej(new Error(text))};
+async function webAI(key,content,max){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:max||2000,messages:[{role:"user",content}]})});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(r.status+" "+(j.error?.message||"request failed"));
+  return (j.content||[]).map(c=>c.text||"").join("");
+}
+function nativeAI(key,prompt){if(!window.AndroidBridge)return webAI(key,prompt);return new Promise((res,rej)=>{const id="a"+Date.now();aiWaiters[id]={res,rej};AndroidBridge.ai(key,"claude-haiku-5-5",prompt,id)})}
+async function copyText(t){if(APP){AndroidBridge.copy(t);return}await navigator.clipboard.writeText(t)}
+
+/* ---------- state ---------- */
+const S={listings:[],profile:{},q:"",mode:"all",status:"open",type:"any",sort:"new",minBeds:0,maxPrice:0,ready:false,remote:false,col:null,curId:null};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Number(n||0).toLocaleString("en-MY");
+const priceText=l=>"RM "+fmt(l.price)+(l.listingType==="rent"?"/mo":"");
+const psf=l=>(l.listingType==="sale"&&l.price&&l.builtUp)?Math.round(l.price/l.builtUp):0;
+const mapLink=l=>hasPin(l)?"https://www.google.com/maps/search/?api=1&query="+pinStr(l):/^https?:\/\//.test(l.mapUrl||"")?l.mapUrl:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent([l.title,l.area,l.city,l.state,"Malaysia"].filter(Boolean).join(", "));
+const linkPhotos=l=>String(l.photoUrls||"").split(/\s+/).filter(u=>/^https?:\/\//.test(u));
+const photos=l=>{const all=[...(l.localPhotos||[]),...linkPhotos(l)];const m=l.mainPhoto;return m&&all.includes(m)?[m,...all.filter(x=>x!==m)]:all};
+const initials=t=>(t||"?").split(/[\s-]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+
+/* ---------- storage: account db, device fallback ---------- */
+const LKEY="pocket-listings-v1";
+function localLoad(){try{const d=JSON.parse(localStorage.getItem(LKEY)||"{}");S.listings=d.listings||[];S.profile=d.profile||{}}catch(e){}}
+function localSave(){if(window.__STANDALONE){kvSet(LKEY,{listings:S.listings,profile:S.profile}).catch(()=>toast("Couldn't save on this phone. Free up some storage and try again."));return}try{localStorage.setItem(LKEY,JSON.stringify({listings:S.listings,profile:S.profile}))}catch(e){}}
+const KVDB=()=>new Promise((res,rej)=>{const r=indexedDB.open("pocket-listings",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function kvGet(k){const db=await KVDB();return new Promise((res,rej)=>{const q=db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function kvSet(k,v){const db=await KVDB();return new Promise((res,rej)=>{const t=db.transaction("kv","readwrite");t.objectStore("kv").put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+async function initStore(){
+  if(window.__STANDALONE){
+    try{navigator.storage?.persist?.()}catch(e){}
+    let d=null;try{d=await kvGet(LKEY)}catch(e){}
+    if(!d){try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}}
+    d=d||{};S.listings=d.listings||[];S.profile=d.profile||{};S.ready=true;render();return;
+  }
+  let db=null,user=null;
+  try{if(window.claude?.use){[db,user]=await Promise.all([claude.use("db"),claude.use("user")])}}catch(e){}
+  let uid=null;try{uid=user?await user.id():null}catch(e){}
+  if(db&&uid){
+    S.remote=true;S.col=db.collection("data/users/"+uid);
+    S.col.onSnapshot(snap=>{
+      const ls=[];let prof={};
+      snap.docs.forEach(d=>{const v=d.data()||{};if(d.id==="_profile")prof=v;else ls.push({...v,id:d.id})});
+      if(!S.pendingProfile){S.profile=prof;if(S.readyDone)applySettings()}
+      S.listings=ls;S.ready=true;render();
+    },()=>{S.remote=false;localLoad();S.ready=true;render()});
+  }else{localLoad();S.ready=true;render()}
+}
+async function saveListing(l){
+  l.updatedAt=new Date().toISOString();if(!l.createdAt)l.createdAt=l.updatedAt;
+  const{id,...data}=l;
+  if(S.remote){await S.col.doc(id).set(data)}
+  else{const i=S.listings.findIndex(x=>x.id===id);if(i>=0)S.listings[i]=l;else S.listings.push(l);localSave();render()}
+}
+async function deleteListing(id){
+  if(S.remote)await S.col.doc(id).delete();
+  else{S.listings=S.listings.filter(x=>x.id!==id);localSave();render()}
+}
+async function saveProfile(p){S.profile=p;if(S.remote)await S.col.doc("_profile").set(p);else{localSave()}}
+const newId=()=>"l"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ---------- home ---------- */
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  let ls=S.listings.filter(l=>{
+    if(S.mode!=="all"&&l.listingType!==S.mode)return false;
+    if(ST().hideClosed&&["sold","rented","expired"].includes(l.status))return false;
+    if(S.status==="open"&&!["active","under_offer"].includes(l.status))return false;
+    if(S.status!=="open"&&S.status!=="any"&&l.status!==S.status)return false;
+    if(S.type!=="any"&&l.propertyType!==S.type)return false;
+    if(S.minBeds&&(+l.beds||0)<S.minBeds)return false;
+    if(S.maxPrice&&(+l.price||0)>S.maxPrice)return false;
+    if(q&&![l.title,l.ref,l.area,l.city,l.propertyType,l.highlights].join(" ").toLowerCase().includes(q))return false;
+    return true;
+  });
+  const by={new:(a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""),lo:(a,b)=>a.price-b.price,hi:(a,b)=>b.price-a.price,szlo:(a,b)=>(a.builtUp||1e9)-(b.builtUp||1e9),szhi:(a,b)=>(b.builtUp||0)-(a.builtUp||0)};
+  return ls.sort(by[S.sort]||by.new);
+}
+function renderChips(){
+  const c=[["all","All"],["sale","For sale"],["rent","For rent"]].map(([k,v])=>`<button class="chip" data-mode="${k}" aria-pressed="${S.mode===k}">${v}</button>`);
+  const st=[["open","Active + offer"],["any","Any status"],...Object.entries(STATUSES).filter(([k])=>!(ST().hideClosed&&["sold","rented","expired"].includes(k)))].map(([k,v])=>`<button class="chip" data-status="${k}" aria-pressed="${S.status===k}">${v}</button>`);
+  const so=S.sort!=="new"?`<button class="chip chip-sort" data-clearsort aria-pressed="true" aria-label="Clear sort">↕ ${SORTS.find(x=>x[0]===S.sort)?.[1]||""} ✕</button>`:"";
+  $("#chips").innerHTML=so+c.join("")+'<span style="flex:none;width:6px"></span>'+st.join("");
+}
+function render(){
+  if(S.ready)onReadyOnce();
+  renderChips();
+  const all=S.listings,act=all.filter(l=>l.status==="active").length,off=all.filter(l=>l.status==="under_offer").length;
+  $("#sub").textContent=!S.ready?"Opening your portfolio…":(S.profile.name?S.profile.name+" · ":"")+all.length+" listing"+(all.length===1?"":"s");
+  $("#tally").innerHTML=all.length?`<div class="tally"><div><span class="lbl">Active</span><b class="num">${act}</b></div><div><span class="lbl">Under offer</span><b class="num">${off}</b></div><div><span class="lbl">Closed</span><b class="num">${all.filter(l=>["sold","rented"].includes(l.status)).length}</b></div></div>`:"";
+  const ls=filtered();
+  if(!S.ready){$("#list").innerHTML=`<div class="empty"><p>Loading listings…</p></div>`}
+  else if(!all.length){$("#list").innerHTML=`<div class="empty"><h2>No listings yet</h2><p>Add your first property with <b>+ New listing</b>. Specs, owner notes and photo links stay with you; only the public parts go into WhatsApp messages.</p><button class="btn btn-ghost" id="loadSamples">Load 3 example listings</button></div>`}
+  else if(!ls.length){$("#list").innerHTML=`<div class="empty"><h2>Nothing matches</h2><p>Try a different search or status.</p></div>`}
+  else $("#list").innerHTML=ls.map(card).join("");
+  $("#storeNote").textContent=S.ready?(S.remote?"Saved to your Claude account. Only you can see these listings.":(APP||window.__STANDALONE)?"Saved on this phone. Export a backup from Settings now and then.":"Saved on this device only. Open the app signed in to keep listings in your account."):"";
+}
+function card(l){
+  const p=photos(l)[0];const pf=psf(l);
+  return `<button class="card" data-open="${esc(l.id)}">
+   <div class="thumb">${p?`<img src="${esc(p)}" alt="" loading="lazy">`:esc(initials(l.propertyType))}</div>
+   <div class="card-body">
+    <div class="card-top"><h3>${esc(l.title)}${l.sample?'<span class="tag-ex">EXAMPLE</span>':""}</h3><span class="pill s-${esc(l.status)}">${esc(STATUSES[l.status]||l.status)}</span></div>
+    <div class="where">${esc([l.ref,l.area,l.city].filter(Boolean).join(" · "))}</div>
+    <div class="price num">${priceText(l)}</div>
+    <div class="specs">${l.beds?`<span>${l.beds} bed</span>`:""}${l.baths?`<span>${l.baths} bath</span>`:""}${l.builtUp?`<span class="num">${fmt(l.builtUp)} sqft</span>`:""}<span>${esc(l.propertyType)}</span></div>
+   </div></button>`;
+}
+
+/* ---------- detail ---------- */
+function openDetail(id){
+  const l=S.listings.find(x=>x.id===id);if(!l)return;S.curId=id;
+  const ps=photos(l),pf=psf(l);
+  const cell=(k,v)=>v||v===0?`<div><span class="lbl">${k}</span><b>${v}</b></div>`:"";
+  $("#detail").innerHTML=`<div class="wrap" style="padding-bottom:0">
+   <div class="screen-bar"><button class="icon-btn" data-back aria-label="Back">← Back</button><h2>${esc(l.ref||"Listing")}</h2><span class="pill s-${esc(l.status)}">${esc(STATUSES[l.status])}</span></div>
+   <div class="hero" id="hero">${ps[0]?`<img src="${esc(ps[0])}" alt="${esc(l.title)}"><span class="ph-zoom" aria-hidden="true">⤢</span>${ps.length>1?`<span class="ph-main">MAIN</span><span class="ph-count">1/${ps.length}</span>`:""}`:`<span class="ph">${esc(initials(l.propertyType))}</span>`}</div>
+   ${ps.length>1?`<div class="strip">${ps.map((u,i)=>`<button class="${i?"":"on"}" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${esc(u)}" alt=""></button>`).join("")}</div>
+   <div class="main-row" id="mainRow" hidden><button class="btn btn-ghost" id="mainBtn">★ Set as main photo</button></div>`:""}
+   <div class="d-head">
+    <span class="lbl">${l.listingType==="rent"?"For rent":"For sale"} · ${esc(l.propertyType)}${l.sample?" · Example":""}</span>
+    <h2>${esc(l.title)}</h2>
+    <a class="loc" href="${esc(mapLink(l))}" target="_blank" rel="noopener"><span aria-hidden="true">📍</span><span>${esc([l.area,l.city,l.state].filter(Boolean).join(", ")||"Location not set")}${hasPin(l)?' <span class="pinned">· Pinned</span>':""}</span><span class="loc-go">Map ›</span></a>
+    <div class="d-price"><span class="big num">${priceText(l)}</span>${l.negotiable?'<span style="color:var(--accent);font-weight:600">Negotiable</span>':""}</div>
+   </div>
+   <div class="grid">
+    ${cell("Bedrooms",l.beds)}${cell("Bathrooms",l.baths)}${cell("Car parks",l.carparks)}
+    ${cell("Built-up",l.builtUp?`<span class="num">${fmt(l.builtUp)}</span> sqft`:"")}${cell("Land",l.landArea?`<span class="num">${fmt(l.landArea)}</span> sqft`:"")}${cell("Furnishing",esc(l.furnishing))}
+    ${cell("Tenure",esc(l.tenure))}${cell("Title",esc(l.titleType))}${cell("Bumi lot",l.bumiLot?"Yes":"No")}
+    ${cell("Floor",esc(l.floorLevel))}${cell("Facing",esc(l.facing))}
+   </div>
+   ${l.highlights?`<div class="sec"><span class="lbl">Highlights · shared</span><p>${esc(l.highlights)}</p></div>`:""}
+   ${l.facilities?`<div class="sec"><span class="lbl">Facilities</span><p>${esc(l.facilities)}</p></div>`:""}
+   ${(l.internalNotes||l.ownerName||l.ownerPhone||l.commission)?`<div class="sec private"><span class="lbl">Internal · never shared</span>
+     ${l.ownerName||l.ownerPhone?`<div><b>${esc(l.ownerName)}</b> <span class="num">${esc(l.ownerPhone)}</span></div>`:""}
+     ${l.commission?`<div>Commission: <b>${esc(l.commission)}</b></div>`:""}
+     ${l.internalNotes?`<p>${esc(l.internalNotes)}</p>`:""}</div>`:""}
+   <div class="sec"><div class="send-row"><a class="btn btn-ghost map-btn" href="${esc(mapLink(l))}" target="_blank" rel="noopener">🗺️ Google Maps</a><a class="btn btn-ghost map-btn" href="${esc(dirLink(l))}" target="_blank" rel="noopener">🧭 Directions</a></div><small class="map-note">${hasPin(l)?"Opens your pinned location.":l.mapUrl?"Opens your saved map link.":"Searches the listing name and area. Tap Edit, then Pin on map, for the exact spot."}</small></div>
+   ${(l.videoUrl||ps.length)?`<div class="sec"><span class="lbl">Media</span><div class="links">${l.videoUrl?`<a href="${esc(l.videoUrl)}" target="_blank" rel="noopener">Video tour</a>`:""}${linkPhotos(l).length?`<a href="${esc(linkPhotos(l)[0])}" target="_blank" rel="noopener">Photos (${linkPhotos(l).length})</a>`:""}</div></div>`:""}
+   <div class="d-actions"><button class="btn btn-wa" data-share>WhatsApp</button><button class="btn btn-primary" id="socialBtn">Social</button><button class="btn btn-ghost" data-edit="${esc(l.id)}">Edit</button><button class="btn btn-danger" id="delBtn">Delete</button></div>
+  </div>`;
+  $("#detail").hidden=false;$("#detail").scrollTop=0;S.phIdx=0;
+}
+
+/* ---------- edit form ---------- */
+function openEdit(id){
+  const l=id?{...S.listings.find(x=>x.id===id)}:{id:newId(),listingType:"sale",propertyType:"Condominium",status:"active",tenure:"Freehold",titleType:"Strata",furnishing:"Partially furnished",area:ST().defArea,city:ST().defCity,state:ST().defState,ref:nextRef()};
+  EP.list=[...(l.localPhotos||[])];EP.main=l.mainPhoto||"";EP.links=linkPhotos(l);EP.added=[];EP.removed=[];
+  const v=k=>esc(l[k]??"");
+  const opt=(arr,cur)=>arr.map(o=>{const[k,t]=Array.isArray(o)?o:[o,o];return `<option value="${esc(k)}"${k===cur?" selected":""}>${esc(t)}</option>`}).join("");
+  const inp=(k,label,type="text",extra="")=>`<label class="f"><span>${label}</span><input id="f-${k}" name="${k}" type="${type}" value="${extra.includes("data-commas")?(l[k]?fmt(l[k]):""):v(k)}" ${extra}></label>`;
+  $("#edit").innerHTML=`<div class="wrap" style="padding-bottom:0">
+   <div class="screen-bar"><button class="icon-btn" data-cancel>Cancel</button><h2>${id?"Edit listing":"New listing"}</h2><button class="btn btn-primary" style="height:40px" form="lf">Save</button></div>
+   <form id="lf" data-id="${esc(l.id)}" data-created="${v("createdAt")}" data-sample="${l.sample?1:""}">
+    <div class="scan-card">
+     <div><b>✦ Fill from brochure</b><small>${(APP||window.__STANDALONE)?"Pick brochure photos or a PDF.":"Pick photos of the brochure pages."} AI fills in the details below for you to check.</small></div>
+     <input id="scanUnit" class="scan-unit" placeholder="Which unit? (optional, e.g. Type B intermediate)" autocomplete="off">
+     <label class="btn btn-primary" id="scanBtn" for="fScanAll">Scan brochure</label><input id="fScanAll" type="file" accept="image/*,application/pdf" multiple hidden>
+     <small id="scanNote" aria-live="polite"></small>
+    </div>
+    <fieldset><legend>Basics</legend>
+     ${inp("title","Listing name","text",'required placeholder="e.g. Trio by Setia, Tower B"')}
+     <div class="row">${inp("ref","Ref no.")}<label class="f"><span>Status</span><select id="f-status" name="status">${opt(Object.entries(STATUSES),l.status)}</select></label></div>
+     <div class="row"><label class="f"><span>Listing type</span><select id="f-listingType" name="listingType">${opt([["sale","For sale"],["rent","For rent"]],l.listingType)}</select></label><label class="f"><span>Property type</span><select id="f-propertyType" name="propertyType">${opt(TYPES,l.propertyType)}</select></label></div>
+    </fieldset>
+    <fieldset><legend>Price</legend>
+     ${inp("price","Price (RM, monthly if rent)","text",'inputmode="numeric" data-commas required autocomplete="off" placeholder="e.g. 509,000"')}
+     <label class="check"><input type="checkbox" id="f-negotiable" name="negotiable" ${l.negotiable?"checked":""}> Negotiable</label>
+    </fieldset>
+    <fieldset><legend>Location</legend>
+     ${inp("area","Area / project","text",'placeholder="e.g. Bukit Tinggi"')}
+     <div class="row">${inp("city","City")}${inp("state","State")}</div>
+     <div class="set-item"><span class="set-lbl">Exact location</span><div class="pin-box" id="pinBox"></div>
+      <input type="hidden" id="f-lat" name="lat" value="${hasPin(l)?(+l.lat).toFixed(6):""}"><input type="hidden" id="f-lng" name="lng" value="${hasPin(l)?(+l.lng).toFixed(6):""}"></div>
+    </fieldset>
+    <fieldset><legend>Specs</legend>
+     <div class="row3">${inp("beds","Bedrooms","number",'inputmode="numeric" min="0"')}${inp("baths","Bathrooms","number",'inputmode="numeric" min="0"')}${inp("carparks","Car parks","number",'inputmode="numeric" min="0"')}</div>
+     <div class="row">${inp("builtUp","Built-up (sqft)","text",'inputmode="numeric" data-commas autocomplete="off"')}${inp("landArea","Land (sqft)","text",'inputmode="numeric" data-commas autocomplete="off"')}</div>
+     <div class="row"><label class="f"><span>Tenure</span><select id="f-tenure" name="tenure">${opt(TENURE,l.tenure)}</select></label><label class="f"><span>Title</span><select id="f-titleType" name="titleType">${opt(TITLES,l.titleType)}</select></label></div>
+     <div class="row"><label class="f"><span>Furnishing</span><select id="f-furnishing" name="furnishing">${opt(FURN,l.furnishing)}</select></label>${inp("floorLevel","Floor level","text",'placeholder="e.g. High floor"')}</div>
+     <div class="row">${inp("facing","Facing")}<label class="check" style="align-self:end;height:44px"><input type="checkbox" id="f-bumiLot" name="bumiLot" ${l.bumiLot?"checked":""}> Bumi lot</label></div>
+     <label class="f"><span>Facilities</span><textarea id="f-facilities" name="facilities" style="min-height:70px" placeholder="Pool, gym, 24h security">${v("facilities")}</textarea></label>
+     <div class="ai-row"><label class="btn btn-ghost" id="brBtn" for="fBrochure">✦ Scan brochure</label><input id="fBrochure" type="file" accept="image/*,application/pdf" multiple hidden><small id="brNote" aria-live="polite">${(APP||window.__STANDALONE)?"Pick brochure photos or a PDF. AI adds the facilities it finds.":"Pick photos of the brochure. AI adds the facilities it finds."}</small></div>
+    </fieldset>
+    <fieldset><legend>Notes</legend>
+     <label class="f"><span>Highlights (goes into WhatsApp messages)</span><textarea id="f-highlights" name="highlights">${v("highlights")}</textarea></label>
+     <div class="row"><label class="f priv"><span>Owner name · private</span><input id="f-ownerName" name="ownerName" value="${v("ownerName")}"></label><label class="f priv"><span>Owner phone · private</span><input id="f-ownerPhone" name="ownerPhone" value="${v("ownerPhone")}" inputmode="tel"></label></div>
+     <label class="f priv"><span>Commission · private</span><input id="f-commission" name="commission" value="${v("commission")}"></label>
+     <label class="f priv"><span>Internal notes · never shared</span><textarea id="f-internalNotes" name="internalNotes" placeholder="Lowest price, key location, viewing rules">${v("internalNotes")}</textarea></label>
+    </fieldset>
+    <fieldset><legend>Photos &amp; media</legend>
+     <div class="set-item"><span class="set-lbl">Photos from gallery</span><div class="vthumbs" id="ephotos"></div>
+      <label class="btn btn-ghost" for="efile">Add from gallery</label><input id="efile" type="file" accept="image/*" multiple hidden><small id="ephotoHint" style="color:var(--muted)" hidden>Tap ★ to choose the main photo. Use ‹ › to change the order.</small><small id="ephotoNote" style="color:var(--muted)" aria-live="polite"></small></div>
+     <label class="f"><span>Or photo links (one per line, https://…)</span><textarea id="f-photoUrls" name="photoUrls" placeholder="Paste Google Drive / Photos / Imgur image links">${v("photoUrls")}</textarea></label>
+     ${inp("videoUrl","Video tour link","url")}${inp("mapUrl","Google Maps link","url",'placeholder="In Google Maps: drop a pin, Share, Copy link"')}
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Save listing</button>
+   </form></div>`;
+  $("#edit").hidden=false;$("#edit").scrollTop=0;renderEPhotos();renderPinBox();
+}
+const NUMS=["price","beds","baths","carparks","builtUp","landArea"];
+async function submitForm(f){
+  const fd=new FormData(f),l={id:f.dataset.id};
+  for(const[k,val]of fd.entries())l[k]=NUMS.includes(k)?numVal(val):(k==="lat"||k==="lng")?(parseFloat(val)||""):String(val).trim();
+  if(!hasPin(l)){const c=coordsFromText(l.mapUrl);if(c){l.lat=+c.lat.toFixed(6);l.lng=+c.lng.toFixed(6)}}
+  l.negotiable=!!fd.get("negotiable");l.bumiLot=!!fd.get("bumiLot");
+  if(f.dataset.created)l.createdAt=f.dataset.created;
+  l.sample=false;
+  l.localPhotos=EP.list.slice();l.mainPhoto=EP.main&&(EP.list.includes(EP.main)||linkPhotos(l).includes(EP.main))?EP.main:"";EP.removed.forEach(dropPhoto);EP.added=[];EP.removed=[];
+  try{await saveListing(l);$("#edit").hidden=true;toast("Listing saved");if(!$("#detail").hidden||S.curId===l.id)openDetail(l.id)}catch(e){toast("Couldn't save. Check your connection and try again.")}
+}
+
+/* ---------- WhatsApp share drawer ---------- */
+let style="quick",aiCtl=null;
+function waTemplate(l,st){
+  const sale=l.listingType==="sale",p=S.profile,pf=psf(l);
+  const where=[l.area,l.city].filter(Boolean).join(", ");
+  if(st==="bm"){
+    return [`🏡 *${sale?"UNTUK DIJUAL":"UNTUK DISEWA"} | ${l.propertyType}*`,`*${l.title}*`,where?`📍 ${where}`:"",``,
+     `💰 *RM ${fmt(l.price)}${sale?"":" sebulan"}*${l.negotiable?" (boleh runding)":""}`,
+     l.builtUp?`📐 ${fmt(l.builtUp)} kaki persegi${l.landArea?` · Tanah ${fmt(l.landArea)} kps`:""}`:"",
+     `🛏️ ${l.beds||0} bilik · 🛁 ${l.baths||0} bilik air${l.carparks?` · 🚗 ${l.carparks} parkir`:""}`,
+     sale&&l.tenure?`📜 ${l.tenure}${l.titleType?` · Hakmilik ${l.titleType}`:""}${l.bumiLot?" · Lot Bumi":""}`:"",
+     l.furnishing?`🛋️ ${({"Unfurnished":"Tanpa perabot","Partially furnished":"Separa perabot","Fully furnished":"Lengkap perabot"})[l.furnishing]||l.furnishing}`:"",
+     l.highlights?`\n✨ ${l.highlights}`:"",``,sig(p,true)].filter(x=>x!=="").join("\n").replace(/\n{3,}/g,"\n\n");
+  }
+  const lines=[`🏡 *${sale?"FOR SALE":"FOR RENT"} | ${l.propertyType}*`,`*${l.title}*`,where?`📍 ${where}`:"",``,
+   `💰 *RM ${fmt(l.price)}${sale?"":"/month"}*${l.negotiable?" (nego)":""}${st==="full"&&pf?` · RM${fmt(pf)} psf`:""}`,
+   l.builtUp?`📐 ${fmt(l.builtUp)} sqft built-up${l.landArea?` · ${fmt(l.landArea)} sqft land`:""}`:"",
+   `🛏️ ${l.beds||0} bed · 🛁 ${l.baths||0} bath${l.carparks?` · 🚗 ${l.carparks} parking`:""}`];
+  if(st==="full"){
+   lines.push(l.tenure?`📜 ${l.tenure}${l.titleType?` · ${l.titleType} title`:""}${l.bumiLot?" · Bumi lot":""}`:"",
+    l.furnishing?`🛋️ ${l.furnishing}`:"",l.floorLevel||l.facing?`🧭 ${[l.floorLevel,l.facing&&("facing "+l.facing)].filter(Boolean).join(", ")}`:"",
+    l.facilities?`🏊 ${l.facilities}`:"");
+   if(l.highlights)lines.push("",`✨ ${l.highlights}`);
+   if(l.videoUrl)lines.push(`🎥 ${l.videoUrl}`);if(hasPin(l)||l.mapUrl)lines.push(`🗺️ ${mapLink(l)}`);
+  }else{lines.push(l.furnishing?`🛋️ ${l.furnishing}`:"");if(l.highlights)lines.push("",`✨ ${l.highlights.split(/(?<=\.)\s/)[0]}`)}
+  lines.push("",sig(p,false));
+  return lines.filter(x=>x!=="").join("\n").replace(/\n{3,}/g,"\n\n");
+}
+function sig(p,bm){
+  const so=ST().signOff.trim();
+  if(so)return [so,[p.name,p.phone].filter(Boolean).join(" · "),p.agency?`${p.agency}${p.ren?` (${p.ren})`:""}`:""].filter(Boolean).join("\n");
+  if(!p.name&&!p.phone)return bm?"📞 Hubungi saya untuk tempah viewing!":"📞 PM me to arrange a viewing!";
+  return (bm?"📞 Tempah viewing: ":"📞 Viewing: ")+[p.name,p.phone].filter(Boolean).join(" · ")+(p.agency?`\n${p.agency}${p.ren?` (${p.ren})`:""}`:"");
+}
+function publicSpecs(l){
+  const keep=["title","ref","listingType","propertyType","status","price","negotiable","area","city","state","builtUp","landArea","beds","baths","carparks","floorLevel","facing","tenure","titleType","bumiLot","furnishing","facilities","highlights","videoUrl","mapUrl"];
+  const o={};keep.forEach(k=>{if(l[k]!==undefined&&l[k]!==""&&l[k]!==0)o[k]=l[k]});const pf=psf(l);if(pf)o.pricePerSqft=pf;return o;
+}
+function openShare(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  style=ST().msgStyle;emojiOn=ST().emoji;
+  $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="Share listing"><div class="drawer-in">
+   <div class="grab"></div><h2 style="font-size:19px">Share ${esc(l.ref||"listing")}</h2>
+   <div class="seg" id="seg">${[["quick","Quick"],["full","Full specs"],["bm","Bahasa"]].map(([k,t])=>`<button data-style="${k}" aria-pressed="${style===k}">${t}</button>`).join("")}</div>
+   <textarea class="msg" id="msg" aria-label="Message text"></textarea>
+   <label class="check"><input type="checkbox" id="emojiTgl" ${emojiOn?"checked":""}> Emoji icons <small style="color:var(--muted);font-weight:400">(turn off if WhatsApp shows &#xFFFD;)</small></label>
+   <div class="ai-row"><button class="btn btn-ghost" id="aiBtn">✦ Rewrite with AI</button><small id="aiNote">AI writes a catchier caption from the public specs. Owner details and internal notes are never sent.</small></div>
+   <label class="f"><span>Client WhatsApp number (optional)</span><input id="waTo" inputmode="tel" placeholder="e.g. 012-345 6789"></label>
+   <div class="send-row" style="grid-template-columns:${APP?"1fr 1fr 1.3fr":"1fr 1fr"}"><button class="btn btn-ghost" id="copyBtn">Copy</button>${APP?'<button class="btn btn-ghost" id="shareBtn">Share…</button>':""}<a class="btn btn-wa" id="waBtn" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open WhatsApp</a></div>
+  </div></div>`;
+  msgSet(waTemplate(l,style));
+}
+function updateWa(){
+  const t=$("#msg")?.value||"";let n=($("#waTo")?.value||"").replace(/\D/g,"");
+  if(n.startsWith("0"))n="6"+n;
+  const a=$("#waBtn");if(a)a.href=`https://api.whatsapp.com/send?${n?"phone="+n+"&":""}text=${encodeURIComponent(t)}`;
+}
+async function aiRewrite(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  if(aiCtl){aiCtl.abort();aiCtl=null;$("#aiBtn").textContent="✦ Rewrite with AI";return}
+  let sample=null;try{sample=window.claude?.use?await claude.use("sample"):null}catch(e){}
+  if(!sample&&(APP||window.__STANDALONE)){
+    if(!S.profile.apiKey){$("#aiNote").textContent="Add your Claude API key under Profile to use AI. The template text above is ready to send.";return}
+    $("#aiBtn").disabled=true;$("#aiNote").textContent="Writing…";
+    try{const t=await nativeAI(S.profile.apiKey,buildPrompt(l));msgSet(t.trim());$("#aiNote").textContent="AI draft ready. Edit anything before sending."}
+    catch(e){$("#aiNote").textContent=/401|auth/i.test(e.message)?"Your API key was rejected. Check it under Profile.":/429/.test(e.message)?"Too many AI requests. Wait a minute and try again.":"AI couldn't finish ("+e.message.slice(0,60)+"). The template text still works."}
+    $("#aiBtn").disabled=false;return;
+  }
+  if(!sample){$("#aiNote").textContent="AI writing isn't available in this view. The template text above is ready to send.";$("#aiBtn").disabled=true;return}
+  aiCtl=new AbortController();$("#aiBtn").textContent="Stop";$("#aiNote").textContent="Writing…";
+  const prompt=buildPrompt(l);
+  try{
+    const r=await sample(prompt,{signal:aiCtl.signal,modelTier:"quick",cache:false,onText:u=>{if(u.text)msgSet(u.text)}});
+    if($("#msg")){msgSet(r.text.trim());$("#aiNote").textContent="AI draft ready. Edit anything before sending."}
+  }catch(e){
+    if($("#aiNote"))$("#aiNote").textContent=e?.code==="not_granted"?"AI writing was not allowed. The template text is ready to send.":e?.code==="rate_limited"?"Too many AI requests. Wait a minute and try again.":e?.name==="AbortError"||e?.code==="aborted"?"Stopped.":"AI couldn't finish. The template text still works.";
+    if(e?.code==="not_granted")$("#aiBtn").disabled=true;
+  }
+  aiCtl=null;if($("#aiBtn")&&!$("#aiBtn").disabled)$("#aiBtn").textContent="✦ Rewrite with AI";
+}
+function buildPrompt(l){
+  const lang=style==="bm"?"Bahasa Melayu (casual, natural Malaysian style)":"English with a light Malaysian tone (Manglish words only sparingly)";
+  const len=style==="quick"?"short: 6-9 lines":"complete: 12-18 lines covering all specs given";
+  const prompt=`You write WhatsApp property listing messages for a Malaysian real estate negotiator.
+Write ONE ready-to-send message in ${lang}. Length: ${len}.
+Rules: start with a hook line; use WhatsApp *bold* for the property name and price; a few relevant emojis at line starts; prices as "RM 480,000" (add "/month" for rentals); use only facts from the JSON, never invent amenities, distances or prices; no hashtags; end with this sign-off exactly: ${JSON.stringify(sig(S.profile,style==="bm"))}
+Output only the message text.
+Listing JSON: ${JSON.stringify(publicSpecs(l))}`;
+  return prompt;
+}
+
+/* ---------- profile & filters drawers ---------- */
+function openProfile(){
+  const p=S.profile;
+  $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="Agent profile"><div class="drawer-in"><div class="grab"></div>
+   <h2 style="font-size:19px">Agent profile</h2><p style="margin:0;color:var(--muted);font-size:13px">Used to sign off every WhatsApp message.</p>
+   <form id="pf" style="padding:0;gap:10px">
+    <label class="f"><span>Your name</span><input id="p-name" name="name" value="${esc(p.name)}"></label>
+    <label class="f"><span>Phone</span><input id="p-phone" name="phone" value="${esc(p.phone)}" inputmode="tel"></label>
+    <div class="row"><label class="f"><span>Agency</span><input id="p-agency" name="agency" value="${esc(p.agency)}"></label><label class="f"><span>REN / REA no.</span><input id="p-ren" name="ren" value="${esc(p.ren)}"></label></div>
+    ${APP?`<label class="f"><span>Claude API key (for AI rewrite, stays on this phone)</span><input id="p-apiKey" name="apiKey" type="password" value="${esc(p.apiKey)}" placeholder="sk-ant-…" autocomplete="off"></label>`:""}
+    <button class="btn btn-primary" type="submit">Save profile</button></form>
+   <h2 style="font-size:17px;margin-top:6px">Backup</h2>
+   <p style="margin:0;color:var(--muted);font-size:13px">${APP?"Listings live on this phone. Export a backup now and then (send it to yourself on WhatsApp or Drive).":"Copy all listings as backup text, or paste a backup to restore."}</p>
+   <div class="send-row"><button class="btn btn-ghost" id="exportBtn">Export backup</button><button class="btn btn-ghost" id="importShow">Import backup</button></div>
+   <div id="importBox" hidden style="display:grid;gap:8px"><textarea class="msg" id="importTxt" style="min-height:120px" placeholder="Paste backup text here"></textarea><button class="btn btn-primary" id="importBtn">Restore listings</button></div>
+   </div></div>`;
+}
+function openFilters(){
+  $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="Filters"><div class="drawer-in"><div class="grab"></div>
+   <h2 style="font-size:19px">Filters</h2>
+   <label class="f"><span>Property type</span><select id="x-type"><option value="any">Any type</option>${TYPES.map(t=>`<option${t===S.type?" selected":""}>${t}</option>`).join("")}</select></label>
+   <div class="row"><label class="f"><span>Min bedrooms</span><select id="x-beds">${[0,1,2,3,4,5].map(n=>`<option value="${n}"${n===S.minBeds?" selected":""}>${n?n+"+":"Any"}</option>`).join("")}</select></label>
+   <label class="f"><span>Max price (RM)</span><input id="x-max" type="text" inputmode="numeric" data-commas value="${S.maxPrice?fmt(S.maxPrice):""}" placeholder="No limit" autocomplete="off"></label></div>
+   <div class="set-item"><span class="set-lbl">Sort by</span><div class="sortgrid">${SORTS.map(([k,t])=>`<button type="button" class="sortb" data-xsort="${k}" aria-pressed="${k===S.sort}">${t}</button>`).join("")}</div></div>
+   <div class="send-row"><button class="btn btn-ghost" id="xReset">Reset</button><button class="btn btn-primary" id="xApply">Show results</button></div></div></div>`;
+}
+const closeDrawer=()=>{if(aiCtl){aiCtl.abort();aiCtl=null}$("#drawerHost").innerHTML=""};
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button,a,[data-close]");if(!t)return;
+  if(t.dataset.mode){S.mode=t.dataset.mode;render()}
+  else if(t.dataset.status){S.status=t.dataset.status;render()}
+  else if(t.dataset.open)openDetail(t.dataset.open);
+  else if(t.hasAttribute("data-back")){$("#detail").hidden=true;S.curId=null}
+  else if(t.dataset.edit)openEdit(t.dataset.edit);
+  else if(t.hasAttribute("data-cancel"))cancelEdit();
+  else if(t.hasAttribute("data-share"))openShare();
+  else if(t.hasAttribute("data-close"))closeDrawer();
+  else if(t.dataset.style){style=t.dataset.style;document.querySelectorAll("#seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===style));const l=S.listings.find(x=>x.id===S.curId);msgSet(waTemplate(l,style))}
+  else if(t.dataset.ph!==undefined)showPhoto(+t.dataset.ph);
+  else switch(t.id){
+    case "addBtn":openEdit(null);break;
+    case "profileBtn":openSettings();break;
+    case "filterBtn":openFilters();break;
+    case "loadSamples":t.disabled=true;try{for(const s of SAMPLES)await saveListing({...s,id:newId()});toast("3 example listings added")}catch(err){toast("Couldn't add examples. Try again.");t.disabled=false}break;
+    case "delBtn":if(t.dataset.armed){const id=S.curId;try{(S.listings.find(x=>x.id===id)?.localPhotos||[]).forEach(dropPhoto);await deleteListing(id);$("#detail").hidden=true;toast("Listing deleted")}catch(err){toast("Couldn't delete. Try again.")}}else{t.dataset.armed=1;t.textContent="Tap to confirm";setTimeout(()=>{if(t.isConnected){delete t.dataset.armed;t.textContent="Delete"}},3000)}break;
+    case "aiBtn":aiRewrite();break;
+    case "shareBtn":AndroidBridge.share($("#msg").value);break;
+    case "exportBtn":{const data=JSON.stringify({app:"pocket-listings",exportedAt:new Date().toISOString(),listings:S.listings.map(({id,...r})=>({id,...r})),leads:LD.leads.map(({id,...r})=>({id,...r}))});if(APP)AndroidBridge.share(data);else{try{await copyText(data);toast("Backup copied. Paste it somewhere safe.")}catch(err){toast("Couldn't copy the backup.")}}break}
+    case "importShow":$("#importBox").hidden=false;break;
+    case "importBtn":{try{const d=JSON.parse($("#importTxt").value);const ls=d.listings||[],lds=d.leads||[];if(!ls.length&&!lds.length)throw 0;for(const x of ls)await saveListing({...x,id:x.id||newId()});for(const x of lds)await ldSave({...x,id:x.id||ldNewId()});closeDrawer();toast(ls.length+" listings"+(lds.length?" and "+lds.length+" leads":"")+" restored")}catch(err){toast("That doesn't look like a Pocket Listings backup.")}break}
+    case "copyBtn":{const m=$("#msg");try{await copyText(m.value);toast("Copied. Paste it into WhatsApp.")}catch(err){m.focus();m.select();toast("Text selected. Long-press to copy.")}break}
+    case "xReset":S.type="any";S.minBeds=0;S.maxPrice=0;S.sort="new";closeDrawer();render();break;
+    case "xApply":S.type=$("#x-type").value;S.minBeds=+$("#x-beds").value;S.maxPrice=numVal($("#x-max").value);S.sort=document.querySelector('[data-xsort][aria-pressed="true"]')?.dataset.xsort||"new";closeDrawer();render();break;
+  }
+});
+document.addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(e.target.id==="lf")submitForm(e.target);
+  if(e.target.id==="pf"){const fd=new FormData(e.target),p={};for(const[k,v]of fd.entries())p[k]=String(v).trim();if(!APP&&S.profile.apiKey)p.apiKey=S.profile.apiKey;try{await saveProfile(p);closeDrawer();render();toast("Profile saved")}catch(err){toast("Couldn't save profile. Try again.")}}
+});
+document.addEventListener("change",e=>{if(e.target.id==="emojiTgl"){emojiOn=e.target.checked;const l=S.listings.find(x=>x.id===S.curId);if(l)msgSet(emojiOn?waTemplate(l,style):$("#msg").value)}});
+document.addEventListener("input",e=>{if(e.target.id==="q"){S.q=e.target.value;render()}if(e.target.id==="msg"||e.target.id==="waTo")updateWa()});
+// keep detail in sync when data changes remotely
+const _render=render;render=function(){_render();if(S.curId&&!$("#detail").hidden&&$("#drawerHost").innerHTML===""&&S.listings.some(x=>x.id===S.curId)){const y=$("#detail").scrollTop;openDetail(S.curId);$("#detail").scrollTop=y}};
+
+
+/* ---------- social video maker ---------- */
+const VW=1080,VH=1920;let SCENES=[],SCN=[],VTOTAL=0;
+function setupScenes(){
+  const st=ST(),d={intro:3.4,price:3,specs:3.4,highlights:3.4,outro:3.2};
+  let k=["intro","price","specs","highlights","outro"];
+  if(!st.videoPrice)k=k.filter(x=>x!=="price");
+  if(st.videoLen==="short")k=k.filter(x=>x!=="highlights");
+  const f=st.videoLen==="short"?(10/k.reduce((a,x)=>a+d[x],0)):1;
+  SCN=k;SCENES=k.map(x=>+(d[x]*f).toFixed(2));VTOTAL=SCENES.reduce((a,b)=>a+b,0);
+}
+const V={imgs:[],busy:false,blob:null,mime:"",raf:0,rec:null};
+const driveDirect=u=>{const m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/);return m?`https://drive.google.com/uc?export=download&id=${m[1]}`:u};
+const vWaiters={};
+window.__imgCb=(id,ok,data)=>{const w=vWaiters[id];if(!w)return;delete vWaiters[id];ok?w.res(data):w.rej(new Error(data))};
+window.__videoCb=(ok,msg)=>{const w=vWaiters.video;if(!w)return;delete vWaiters.video;ok?w.res(msg):w.rej(new Error(msg))};
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("image"));i.src=src});
+function nativeImg(url){return new Promise((res,rej)=>{const id="i"+Math.random().toString(36).slice(2);vWaiters[id]={res,rej};AndroidBridge.fetchImage(driveDirect(url),id)})}
+function socialCaption(l){
+  const sale=l.listingType==="sale",p=S.profile,pf=psf(l);
+  const tag=s=>"#"+String(s||"").replace(/[^A-Za-z0-9]/g,"");
+  const tags=[ "#PropertyMalaysia",l.city&&tag(l.city+"Property"),l.area&&tag(l.area),tag(l.propertyType),sale?"#RumahUntukDijual":"#RumahSewa",sale?"#PropertyForSale":"#ForRent","#Selangor"===tag(l.state)?"#SelangorProperty":l.state&&tag(l.state+"Property")].filter(Boolean);
+  return [`🏡 ${sale?"For Sale":"For Rent"}: ${l.title}${l.area?", "+l.area:""}`,"",
+    `💰 RM ${fmt(l.price)}${sale?"":"/month"}${pf?` (RM${fmt(pf)} psf)`:""}${l.negotiable?" · Nego":""}`,
+    [l.beds?`🛏️ ${l.beds} bed`:"",l.baths?`🛁 ${l.baths} bath`:"",l.builtUp?`📐 ${fmt(l.builtUp)} sqft`:"",l.carparks?`🚗 ${l.carparks} parking`:""].filter(Boolean).join(" | "),
+    [l.tenure,l.furnishing].filter(Boolean).join(" · "),
+    l.highlights?`\n✨ ${l.highlights}`:"","",
+    `📞 DM or WhatsApp ${[p.name,p.phone].filter(Boolean).join(" ")||"me"} to book a viewing.`,
+    p.agency?`${p.agency}${p.ren?` (${p.ren})`:""}`:"","",[...new Set([...tags,...ST().hashtags.split(/[\s,]+/).filter(Boolean).map(h=>h.startsWith("#")?h:"#"+h)])].join(" ")
+  ].filter((x,i,a)=>!(x===""&&a[i-1]==="")).join("\n").trim();
+}
+function openVideo(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  V.imgs=[];V.blob=null;
+  setupScenes();const links=linkPhotos(l);
+  $("#video").innerHTML=`<div class="wrap" style="padding-bottom:30px">
+   <div class="screen-bar"><button class="icon-btn" data-vclose>← Back</button><h2>TikTok / Reels video · ${esc(l.ref||"")}</h2></div>
+   <p style="color:var(--muted);font-size:13px;margin:12px 0">A ${Math.round(VTOTAL)}-second vertical video (1080×1920) for Reels, TikTok, Stories and Shorts, with photos, price, specs and your contact. Add music inside the social app.</p>
+   <div class="sec" style="margin-top:0"><span class="lbl">Photos for the video</span>
+    <div class="vthumbs" id="vthumbs"><span style="color:var(--muted);font-size:13px">No photos yet. The video uses a plain background until you add some.</span></div>
+    <div class="send-row" style="grid-template-columns:${APP&&links.length?"1fr 1fr":"1fr"}">
+     <label class="btn btn-ghost" for="vfile">Add from gallery</label>
+     ${APP&&links.length?`<button class="btn btn-ghost" id="vLinks">Use ${links.length} photo link${links.length>1?"s":""}</button>`:""}
+    </div>
+    <input id="vfile" type="file" accept="image/*" multiple hidden>
+   </div>
+   <div class="vstage"><canvas id="vcanvas" width="${VW}" height="${VH}"></canvas><video id="vout" playsinline controls hidden></video></div>
+   <div class="vprog" id="vprogWrap" hidden><div id="vprog"></div></div>
+   <div class="send-row"><button class="btn btn-ghost" id="vPreview">Preview</button><button class="btn btn-primary" id="vMake">Create video</button></div>
+   <div class="sec"><span class="lbl">Caption</span><textarea class="msg" id="vcap" style="min-height:200px" aria-label="Caption"></textarea>
+    <div class="ai-row"><button class="btn btn-ghost" id="vAi">✦ Rewrite with AI</button><small id="vAiNote">Uses the public specs only.</small></div></div>
+   <div class="sec" id="vDone" hidden><span class="lbl">Post it</span>
+    <div class="send-row">${APP?`<button class="btn btn-ghost" id="vSave">Save to gallery</button><button class="btn btn-wa" id="vShare">Share video + caption</button>`:`<button class="btn btn-ghost" id="vCopy">Copy caption</button><button class="btn btn-primary" id="vDl">Download video</button>`}</div>
+    <small style="color:var(--muted)" id="vFmt"></small></div>
+  </div>`;
+  $("#vcap").value=socialCaption(l);
+  $("#video").hidden=false;$("#video").scrollTop=0;
+  (document.fonts?.ready||Promise.resolve()).then(()=>drawFrame(0.6,l));
+  (async()=>{for(const u of photos(l).filter(u=>(l.localPhotos||[]).includes(u)).slice(0,10)){try{V.imgs.push(await loadImg(photoForCanvas(u)))}catch(e){}}if(V.imgs.length)renderThumbs()})();
+}
+function renderThumbs(){
+  $("#vthumbs").innerHTML=V.imgs.length?V.imgs.map((im,i)=>`<button class="vthumb" data-vrm="${i}" aria-label="Remove photo ${i+1}"><img src="${esc(im.src)}" alt=""><span>×</span></button>`).join(""):`<span style="color:var(--muted);font-size:13px">No photos yet. The video uses a plain background until you add some.</span>`;
+  const l=S.listings.find(x=>x.id===S.curId);if(l&&!V.busy)drawFrame(0.6,l);
+}
+/* drawing helpers */
+const ease=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
+function cover(c,img,zoom,shiftX){
+  const s=Math.max(VW/img.width,VH/img.height)*zoom,w=img.width*s,h=img.height*s;
+  c.drawImage(img,(VW-w)/2+shiftX,(VH-h)/2,w,h);
+}
+function wrapLines(c,text,maxW,maxLines){
+  const words=String(text).split(/\s+/),lines=[];let line="";
+  for(const w of words){const t=line?line+" "+w:w;if(c.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t}
+  if(line)lines.push(line);
+  if(lines.length>maxLines){lines.length=maxLines;lines[maxLines-1]=lines[maxLines-1].replace(/\s*\S*$/,"")+"…"}
+  return lines;
+}
+function fitFont(c,text,maxW,size,weight,family){do{c.font=`${weight} ${size}px ${family}`;size-=4}while(c.measureText(text).width>maxW&&size>30);return size+4}
+const DF='"Bricolage Grotesque", system-ui, sans-serif',BF='"Figtree", system-ui, sans-serif';
+function bgFor(c,i,u){
+  if(V.imgs.length){const img=V.imgs[i%V.imgs.length];cover(c,img,1.04+0.08*u,(i%2?-1:1)*30*u)}
+  else{const g=c.createLinearGradient(0,0,VW,VH);const vc=VCOLORS[ST().videoColor]||VCOLORS.green;g.addColorStop(0,vc[1]);g.addColorStop(1,vc[2]);c.fillStyle=g;c.fillRect(0,0,VW,VH);
+    c.strokeStyle="rgba(255,255,255,.06)";c.lineWidth=2;for(let x=-VH;x<VW;x+=90){c.beginPath();c.moveTo(x+u*40,0);c.lineTo(x+VH+u*40,VH);c.stroke()}}
+}
+function drawFrame(t,l){
+  const cv=$("#vcanvas");if(!cv)return;const c=cv.getContext("2d");
+  let i=0,acc=0;while(i<SCENES.length-1&&t>=acc+SCENES[i]){acc+=SCENES[i];i++}
+  const lt=t-acc,u=lt/SCENES[i],sale=l.listingType==="sale",p=S.profile;
+  bgFor(c,i,u);
+  if(lt<0.45&&i>0){c.globalAlpha=1-lt/0.45;bgFor(c,i-1,1);c.globalAlpha=1}
+  // legibility shade
+  const g=c.createLinearGradient(0,VH*0.25,0,VH);g.addColorStop(0,"rgba(5,15,11,0)");g.addColorStop(0.55,"rgba(5,15,11,.72)");g.addColorStop(1,"rgba(5,15,11,.92)");
+  c.fillStyle=g;c.fillRect(0,0,VW,VH);const g2=c.createLinearGradient(0,0,0,300);g2.addColorStop(0,"rgba(5,15,11,.55)");g2.addColorStop(1,"rgba(5,15,11,0)");c.fillStyle=g2;c.fillRect(0,0,VW,300);
+  // story progress bars
+  let x0=60;const gap=12,bw=(VW-120-gap*(SCENES.length-1))/SCENES.length;
+  SCENES.forEach((d,k)=>{c.fillStyle="rgba(255,255,255,.3)";c.fillRect(x0,70,bw,8);c.fillStyle="#fff";c.fillRect(x0,70,bw*(k<i?1:k===i?Math.min(1,u):0),8);x0+=bw+gap});
+  c.textBaseline="alphabetic";c.fillStyle="#fff";c.font=`600 38px ${BF}`;c.textAlign="left";c.fillText(p.agency||p.name||"Property listing",60,150);
+  c.textAlign="right";c.fillText(l.ref||"",VW-60,150);c.textAlign="left";
+  // text entrance
+  const a=ease(lt/0.6),dy=(1-a)*60;c.globalAlpha=a;
+  const L=72,R=VW-72,MW=R-L;
+  const K=SCN[i];
+  if(K==="intro"){
+    const tag=`${sale?"FOR SALE":"FOR RENT"} · ${l.propertyType}`.toUpperCase();
+    c.font=`700 40px ${BF}`;const tw=c.measureText(tag).width+56;
+    c.fillStyle="#e7a748";roundRect(c,L,1180+dy,tw,76,38);c.fill();c.fillStyle="#1b1206";c.fillText(tag,L+28,1232+dy);
+    c.fillStyle="#fff";c.font=`700 104px ${DF}`;const ls=wrapLines(c,l.title,MW,3);ls.forEach((s,k)=>c.fillText(s,L,1390+dy+k*112));
+    c.font=`500 50px ${BF}`;c.fillStyle="rgba(255,255,255,.85)";c.fillText("📍 "+[l.area,l.city].filter(Boolean).join(", "),L,1390+dy+ls.length*112+40);
+  }else if(K==="price"){
+    c.font=`700 40px ${BF}`;c.fillStyle="#e7a748";c.fillText(sale?"ASKING PRICE":"MONTHLY RENTAL",L,1290+dy);
+    const pt="RM "+fmt(l.price);const fs=fitFont(c,pt,MW,190,700,DF);c.font=`700 ${fs}px ${DF}`;c.fillStyle="#fff";c.fillText(pt,L,1290+dy+fs+10);
+    const pf=psf(l);c.font=`500 54px ${BF}`;c.fillStyle="rgba(255,255,255,.88)";
+    c.fillText([sale?"":"per month",l.negotiable?"Negotiable":""].filter(Boolean).join("  ·  "),L,1290+dy+fs+100);
+  }else if(K==="specs"){
+    const cells=[[l.beds,"Bedrooms"],[l.baths,"Bathrooms"],[l.builtUp?fmt(l.builtUp):"","sqft built-up"],[l.carparks,"Car parks"]].filter(x=>x[0]);
+    const cw=(MW-30)/2,ch=250,top=1020+dy;
+    cells.slice(0,4).forEach(([v,lab],k)=>{const cx=L+(k%2)*(cw+30),cy=top+Math.floor(k/2)*(ch+30);
+      c.fillStyle="rgba(255,255,255,.12)";roundRect(c,cx,cy,cw,ch,28);c.fill();
+      c.fillStyle="#fff";c.font=`700 ${fitFont(c,String(v),cw-60,130,700,DF)}px ${DF}`;c.fillText(String(v),cx+36,cy+150);
+      c.font=`500 42px ${BF}`;c.fillStyle="rgba(255,255,255,.8)";c.fillText(lab,cx+36,cy+210)});
+  }else if(K==="highlights"){
+    c.font=`700 40px ${BF}`;c.fillStyle="#e7a748";c.fillText("WHY YOU'LL LIKE IT",L,1120+dy);
+    c.fillStyle="#fff";c.font=`600 60px ${BF}`;const hl=l.highlights||l.facilities||`${l.furnishing||""} ${l.propertyType} in ${l.area||l.city||"a great location"}`;
+    const ls=wrapLines(c,hl,MW,6);ls.forEach((s,k)=>c.fillText(s,L,1210+dy+k*76));
+    const chips=[l.tenure,l.furnishing,l.titleType&&l.titleType+" title",l.bumiLot?"Bumi lot":""].filter(Boolean);
+    let cx=L,cy=1210+dy+ls.length*76+50;c.font=`600 40px ${BF}`;
+    chips.forEach(ch=>{const w=c.measureText(ch).width+48;if(cx+w>R){cx=L;cy+=86}c.strokeStyle="rgba(255,255,255,.7)";c.lineWidth=3;roundRect(c,cx,cy,w,68,34);c.stroke();c.fillStyle="#fff";c.fillText(ch,cx+24,cy+47);cx+=w+16});
+  }else{
+    c.font=`700 40px ${BF}`;c.fillStyle="#e7a748";c.fillText("BOOK A VIEWING",L,1180+dy);
+    c.fillStyle="#fff";c.font=`700 ${fitFont(c,p.name||"Contact me",MW,110,700,DF)}px ${DF}`;c.fillText(p.name||"Contact me",L,1310+dy);
+    if(p.phone){c.font=`500 72px ${BF}`;c.fillText(p.phone,L,1420+dy)}
+    c.font=`500 44px ${BF}`;c.fillStyle="rgba(255,255,255,.85)";
+    if(p.agency)c.fillText(p.agency+(p.ren?` · ${p.ren}`:""),L,1510+dy);
+    c.fillStyle="#1a8f4e";roundRect(c,L,1580+dy,520,96,48);c.fill();c.fillStyle="#fff";c.font=`700 46px ${BF}`;c.fillText("WhatsApp me now",L+44,1643+dy);
+  }
+  c.globalAlpha=1;
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function playAnim(record){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l||V.busy)return;
+  V.busy=true;$("#vout").hidden=true;$("#vcanvas").hidden=false;$("#vprogWrap").hidden=false;
+  ["vPreview","vMake"].forEach(id=>$("#"+id).disabled=true);
+  setupScenes();
+  let rec=null,chunks=[];
+  if(record){
+    const types=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp9","video/webm"];
+    V.mime=(window.MediaRecorder&&types.find(t=>MediaRecorder.isTypeSupported(t)))||"";
+    if(!V.mime||!$("#vcanvas").captureStream){toast("This phone's browser can't record video.");V.busy=false;["vPreview","vMake"].forEach(id=>$("#"+id).disabled=false);return}
+    rec=new MediaRecorder($("#vcanvas").captureStream(30),{mimeType:V.mime,videoBitsPerSecond:5_000_000});
+    rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+    rec.onstop=()=>{V.blob=new Blob(chunks,{type:V.mime.split(";")[0]});const vo=$("#vout");vo.src=URL.createObjectURL(V.blob);vo.hidden=false;$("#vcanvas").hidden=true;
+      $("#vDone").hidden=false;$("#vFmt").textContent=`${V.mime.startsWith("video/mp4")?"MP4":"WebM"} · ${(V.blob.size/1048576).toFixed(1)} MB · 1080×1920`+(V.mime.startsWith("video/mp4")?"":" (Instagram may not accept WebM; TikTok and Facebook do)");
+      toast("Video ready");$("#vDone").scrollIntoView({behavior:"smooth",block:"center"})};
+    drawFrame(0,l);rec.start(500);
+  }
+  const t0=performance.now();
+  const step=()=>{const t=(performance.now()-t0)/1000;drawFrame(Math.min(t,VTOTAL-0.001),l);$("#vprog").style.width=Math.min(100,t/VTOTAL*100)+"%";
+    if(t<VTOTAL)V.raf=requestAnimationFrame(step);
+    else{V.busy=false;["vPreview","vMake"].forEach(id=>$("#"+id)&&($("#"+id).disabled=false));$("#vprogWrap").hidden=true;if(rec)setTimeout(()=>rec.state!=="inactive"&&rec.stop(),250)}};
+  V.raf=requestAnimationFrame(step);
+}
+async function sendVideoToPhone(share){
+  if(!V.blob)return;const caption=$("#vcap").value;
+  if(share)AndroidBridge.copy(caption);
+  const btns=["vSave","vShare"].map(id=>$("#"+id));btns.forEach(b=>b&&(b.disabled=true));
+  try{
+    AndroidBridge.videoBegin();
+    const CH=786432;
+    for(let o=0;o<V.blob.size;o+=CH){
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=rej;r.readAsDataURL(V.blob.slice(o,o+CH))});
+      AndroidBridge.videoChunk(b64);
+    }
+    const l=S.listings.find(x=>x.id===S.curId);
+    const name=`${(l?.ref||"listing").replace(/[^\w-]/g,"")}-${Date.now()}.${V.mime.startsWith("video/mp4")?"mp4":"webm"}`;
+    const done=new Promise((res,rej)=>{vWaiters.video={res,rej}});
+    AndroidBridge.videoFinish(V.mime.split(";")[0],caption,share,name);
+    await done;
+    toast(share?"Caption copied. Paste it into your post.":"Saved to Movies › Pocket Listings");
+  }catch(e){toast("Couldn't save the video: "+String(e.message||e).slice(0,60))}
+  btns.forEach(b=>b&&(b.disabled=false));
+}
+async function aiText(prompt){
+  let sample=null;try{sample=window.claude?.use?await claude.use("sample"):null}catch(e){}
+  if(sample){const r=await sample(prompt,{modelTier:"quick",cache:false});return r.text.trim()}
+  if((APP||window.__STANDALONE)){if(!S.profile.apiKey)throw new Error("Add your Claude API key in Settings to use AI.");return (await nativeAI(S.profile.apiKey,prompt)).trim()}
+  throw new Error("AI writing isn't available here.");
+}
+async function vAiRewrite(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  $("#vAi").disabled=true;$("#vAiNote").textContent="Writing…";
+  const prompt=`Write an Instagram/TikTok/Facebook caption for a Malaysian property listing video.
+English with a light Malaysian tone. 8-14 short lines: a scroll-stopping hook, price, key specs, 1-2 lifestyle lines based ONLY on the facts given, a call to action to DM or WhatsApp for viewing, then 8-12 relevant hashtags (mix English and Malay, include the area and city).
+Use a few emojis at line starts. Never invent facts, distances or amenities. Sign-off to include: ${JSON.stringify(sig(S.profile,false))}
+Output only the caption.
+Listing JSON: ${JSON.stringify(publicSpecs(l))}`;
+  try{$("#vcap").value=await aiText(prompt);$("#vAiNote").textContent="AI caption ready. Edit anything before posting."}
+  catch(e){$("#vAiNote").textContent=/401|auth/i.test(e.message)?"Your API key was rejected. Check it under Profile.":e.message.slice(0,90)}
+  $("#vAi").disabled=false;
+}
+async function addLinkPhotos(){
+  const l=S.listings.find(x=>x.id===S.curId);const btn=$("#vLinks");btn.disabled=true;btn.textContent="Loading…";
+  let ok=0;
+  for(const u of linkPhotos(l).slice(0,8)){try{V.imgs.push(await loadImg(await nativeImg(u)));ok++}catch(e){}}
+  renderThumbs();btn.disabled=false;btn.textContent="Use photo links";
+  toast(ok?`${ok} photo${ok>1?"s":""} added`:"Couldn't load those links. Use direct image links, or add from gallery.");
+}
+document.addEventListener("change",async e=>{
+  if(e.target.id!=="vfile")return;
+  for(const f of [...e.target.files].slice(0,10)){try{V.imgs.push(await loadImg(URL.createObjectURL(f)))}catch(err){}}
+  e.target.value="";renderThumbs();
+});
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.hasAttribute("data-vclose")){cancelAnimationFrame(V.raf);V.busy=false;$("#video").hidden=true;$("#video").innerHTML="";return}
+  if(t.dataset.vrm!==undefined){V.imgs.splice(+t.dataset.vrm,1);renderThumbs();return}
+  switch(t.id){
+    case "videoBtn":openVideo();break;
+    case "vPreview":playAnim(false);break;
+    case "vMake":playAnim(true);break;
+    case "vLinks":addLinkPhotos();break;
+    case "vAi":vAiRewrite();break;
+    case "vSave":sendVideoToPhone(false);break;
+    case "vShare":sendVideoToPhone(true);break;
+    case "vCopy":try{await copyText($("#vcap").value);toast("Caption copied")}catch(err){$("#vcap").select();toast("Caption selected. Long-press to copy.")}break;
+    case "vDl":{let dl=null;try{dl=window.claude?.use?await claude.use("downloads"):null}catch(err){}
+      if(!dl){await webShareFile(V.blob,`${(S.listings.find(x=>x.id===S.curId)?.ref||"listing").replace(/[^\w-]/g,"")}-video.${V.mime.startsWith("video/mp4")?"mp4":"webm"}`,$("#vcap").value);break}
+      const l=S.listings.find(x=>x.id===S.curId);
+      try{await dl.save({filename:`${(l?.ref||"listing").replace(/[^\w-]/g,"")}-video.${V.mime.startsWith("video/mp4")?"mp4":"webm"}`,data:V.blob});toast("Video saved")}
+      catch(err){toast(err?.code==="declined"?"Download cancelled.":"Couldn't save the video.")}break}
+  }
+});
+
+
+/* ---------- settings ---------- */
+const DEF={theme:"system",accent:"green",textSize:"normal",compact:false,clientMode:false,pin:"",msgStyle:"quick",emoji:true,signOff:"",hashtags:"",videoColor:"green",videoPrice:true,videoLen:"standard",refPrefix:"KLG-",defArea:"",defCity:"Klang",defState:"Selangor",defMode:"all",defStatus:"open",defSort:"new",hideClosed:false,lang:"en"};
+const ST=()=>({...DEF,...(S.profile.settings||{})});
+// [name, light accent, light soft, light text-on-accent, dark accent, dark soft, dark text-on-accent]
+const ACCENTS={green:["Green","#1d6b51","#dcefe6","#ffffff","#5cc49b","#1d3a2e","#06231a"],navy:["Navy","#1f4e8c","#dde7f5","#ffffff","#7fb0f0","#1c2c44","#0a1a33"],maroon:["Maroon","#8c2f39","#f5dfe1","#ffffff","#ee8f99","#3d1c20","#2e0a0f"],gold:["Gold","#8a6a12","#f4ead0","#ffffff","#e3bd52","#3a3016","#2a1f02"],teal:["Teal","#0f6f7a","#d6eef0","#ffffff","#5cc6d1","#163a3e","#032327"]};
+const VCOLORS={green:["Green","#1d6b51","#0c2e23"],navy:["Navy","#1f4e8c","#0b1c36"],maroon:["Maroon","#8c2f39","#2e0d12"],gold:["Gold","#9a7614","#2e2306"],black:["Black","#333333","#050505"]};
+let saveT;
+function persistSoon(ms){S.pendingProfile=true;clearTimeout(saveT);saveT=setTimeout(async()=>{try{await saveProfile(S.profile)}catch(e){toast("Couldn't save settings. Try again.")}S.pendingProfile=false},ms)}
+function saveSettings(patch,quiet){S.profile={...S.profile,settings:{...ST(),...patch}};applySettings();persistSoon(quiet?700:0)}
+function applySettings(){
+  const st=ST(),root=document.documentElement;
+  if(st.theme==="system")root.removeAttribute("data-theme");else root.setAttribute("data-theme",st.theme);
+  const a=ACCENTS[st.accent]||ACCENTS.green;
+  $("#accentCss").textContent=`:root{--accent:${a[1]};--accent-soft:${a[2]};--accent-fg:${a[3]}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--accent:${a[4]};--accent-soft:${a[5]};--accent-fg:${a[6]}}}:root[data-theme="dark"]{--accent:${a[4]};--accent-soft:${a[5]};--accent-fg:${a[6]}}`;
+  document.body.style.zoom={small:.9,normal:1,large:1.12}[st.textSize]||1;
+  document.body.classList.toggle("compact",!!st.compact);
+  document.body.classList.toggle("client",!!st.clientMode);
+  const cb=$("#clientBtn");if(cb){cb.setAttribute("aria-pressed",String(!!st.clientMode));cb.textContent=st.clientMode?"Client mode on":"Client mode"}
+  if(APP&&AndroidBridge.setTheme){const dark=st.theme==="dark"||(st.theme==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);try{AndroidBridge.setTheme(dark)}catch(e){}}
+  setLang(st.lang);
+}
+function onReadyOnce(){
+  if(S.readyDone)return;S.readyDone=true;
+  const st=ST();S.mode=st.defMode;S.status=st.defStatus;S.sort=SORTS.some(x=>x[0]===st.defSort)?st.defSort:"new";
+  applySettings();
+  if(st.pin)showLock("unlock");
+}
+function nextRef(){
+  const pre=ST().refPrefix||"";let n=0;
+  S.listings.forEach(l=>{if(pre&&String(l.ref||"").startsWith(pre)){const m=String(l.ref).slice(pre.length).match(/^\d+/);if(m)n=Math.max(n,+m[0])}});
+  return pre+String((n||S.listings.length)+1).padStart(3,"0");
+}
+function openSettings(){renderSettings();$("#settings").hidden=false;$("#settings").scrollTop=0}
+function renderSettings(){
+  const st=ST(),p=S.profile,y=$("#settings").scrollTop;
+  const seg=(k,opts)=>`<div class="seg" style="grid-template-columns:repeat(${opts.length},1fr)">${opts.map(([v,t])=>`<button data-set="${k}" data-val="${v}" aria-pressed="${String(st[k])===String(v)}">${t}</button>`).join("")}</div>`;
+  const tog=(k,label,hint)=>`<label class="set-tog"><span><b>${label}</b>${hint?`<small>${hint}</small>`:""}</span><input type="checkbox" role="switch" id="set-${k}" data-set-toggle="${k}" ${st[k]?"checked":""}></label>`;
+  const txt=(k,label,ph="")=>`<label class="f"><span>${label}</span><input id="set-${k}" data-set-text="${k}" value="${esc(st[k])}" placeholder="${esc(ph)}" autocomplete="off"></label>`;
+  const prof=(k,label,type="text",extra="")=>`<label class="f"><span>${label}</span><input id="prof-${k}" data-prof="${k}" type="${type}" value="${esc(p[k])}" ${extra}></label>`;
+  const sw=(k,map)=>`<div class="swatches">${Object.entries(map).map(([v,c])=>`<button class="sw" data-set="${k}" data-val="${v}" aria-pressed="${st[k]===v}"><i style="background:${c[1]}"></i><span>${c[0]}</span></button>`).join("")}</div>`;
+  $("#settings").innerHTML=`<div class="wrap" style="padding-bottom:40px">
+   <div class="screen-bar"><button class="icon-btn" data-sclose>← Back</button><h2>Settings</h2></div>
+   <section class="set-sec"><h3>Your profile</h3><p class="set-hint">Signs off every WhatsApp message, caption and video.</p>
+    ${prof("name","Your name")}${prof("phone","Phone","text",'inputmode="tel"')}
+    <div class="row">${prof("agency","Agency")}${prof("ren","REN / REA no.")}</div>
+    ${(APP||window.__STANDALONE)?prof("apiKey","Claude API key (for AI rewrite, stays on this phone)","password",'placeholder="sk-ant-…" autocomplete="off"'):""}
+   </section>
+   <section class="set-sec"><h3>Appearance</h3>
+    <div class="set-item"><span class="set-lbl">Theme</span>${seg("theme",[["system","System"],["light","Light"],["dark","Dark"]])}</div>
+    <div class="set-item"><span class="set-lbl">Accent colour</span>${sw("accent",ACCENTS)}</div>
+    <div class="set-item"><span class="set-lbl">Text size</span>${seg("textSize",[["small","Small"],["normal","Normal"],["large","Large"]])}</div>
+    ${tog("compact","Compact list","Smaller cards so more listings fit on screen")}
+   </section>
+   <section class="set-sec"><h3>Client meetings &amp; privacy</h3>
+    ${tog("clientMode","Client mode","Hides owner contacts, internal notes, commission, Edit and Delete so you can hand the phone to a client")}
+    <div class="set-item"><span class="set-lbl">App lock</span><p class="set-hint">${st.pin?"A 4-digit PIN is needed to open the app and to leave client mode.":"Ask for a 4-digit PIN when the app opens and before leaving client mode."}</p>
+     <div class="send-row">${st.pin?`<button class="btn btn-ghost" id="pinChange">Change PIN</button><button class="btn btn-danger" id="pinRemove">Remove PIN</button>`:`<button class="btn btn-primary" id="pinSet">Set PIN</button>`}</div></div>
+   </section>
+   <section class="set-sec"><h3>Sharing</h3>
+    <div class="set-item"><span class="set-lbl">Default WhatsApp style</span>${seg("msgStyle",[["quick","Quick"],["full","Full specs"],["bm","Bahasa"]])}</div>
+    ${tog("emoji","Emoji icons","Start messages with emoji. Turn off if a phone shows boxes instead")}
+    ${txt("signOff","Custom sign-off line","e.g. 📞 Call or WhatsApp me for a viewing")}
+    ${txt("hashtags","Extra hashtags for social captions","#KlangHomes #MyAgency")}
+   </section>
+   <section class="set-sec"><h3>Social video</h3>
+    <div class="set-item"><span class="set-lbl">Video colour</span>${sw("videoColor",VCOLORS)}</div>
+    ${tog("videoPrice","Show price in video","Turn off when you'd rather discuss price in private")}
+    <div class="set-item"><span class="set-lbl">Video length</span>${seg("videoLen",[["short","Short (10s)"],["standard","Standard (16s)"]])}</div>
+   </section>
+   <section class="set-sec"><h3>Listings</h3>
+    <div class="row">${txt("refPrefix","Ref no. prefix","KLG-")}${txt("defArea","Default area","e.g. Bukit Tinggi")}</div>
+    <div class="row">${txt("defCity","Default city","Klang")}${txt("defState","Default state","Selangor")}</div>
+    <div class="set-item"><span class="set-lbl">Open the list on</span>${seg("defMode",[["all","All"],["sale","For sale"],["rent","For rent"]])}${seg("defStatus",[["open","Active + offer"],["active","Active"],["any","Any status"]])}</div>
+    <div class="set-item"><span class="set-lbl">Sort by</span>${seg("defSort",[["new","Newest"],["lo","Price ↑"],["hi","Price ↓"],["szhi","Biggest"]])}</div>
+    ${tog("hideClosed","Hide closed listings","Sold, rented and expired listings stay out of the list and filters")}
+   </section>
+   <section class="set-sec"><h3>Language</h3>${seg("lang",[["en","English"],["bm","Bahasa Melayu"]])}<p class="set-hint">Changes the app's buttons and labels. Pick the WhatsApp message language in the share screen.</p></section>
+   <section class="set-sec"><h3>Backup</h3><p class="set-hint">${APP?"Listings live on this phone. Export a backup now and then (send it to yourself on WhatsApp or Drive). Gallery photos are not part of the backup.":"Copy all listings as backup text, or paste a backup to restore."}</p>
+    <div class="send-row"><button class="btn btn-ghost" id="exportBtn">Export backup</button><button class="btn btn-ghost" id="importShow">Import backup</button></div>
+    <div id="importBox" hidden style="display:grid;gap:8px"><textarea class="msg" id="importTxt" style="min-height:120px" placeholder="Paste backup text here"></textarea><button class="btn btn-primary" id="importBtn">Restore listings</button></div>
+   </section>
+   <p class="note">Pocket Listings${APP&&AndroidBridge.version?" "+esc(AndroidBridge.version()):""} · ${S.remote?"Saved to your Claude account":"Saved on this phone"}</p>
+  </div>`;
+  $("#settings").scrollTop=y;
+}
+function toggleClient(){
+  const st=ST();
+  if(st.clientMode&&st.pin){showLock("check",()=>{saveSettings({clientMode:false});afterClient()},"Enter PIN to leave client mode");return}
+  saveSettings({clientMode:!st.clientMode});afterClient();
+}
+function afterClient(){
+  const on=ST().clientMode;
+  if(on){$("#edit").hidden=true;$("#settings").hidden=true;closeDrawer()}
+  render();if(!$("#settings").hidden)renderSettings();
+  toast(on?"Client mode on: private details hidden":"Client mode off");
+}
+/* PIN lock */
+let lockCb=null,lockMode="",lockTitle="",pinBuf="",pinFirst="";
+function showLock(mode,cb,title){lockMode=mode;lockCb=cb||null;lockTitle=title||"";pinBuf="";pinFirst="";drawLock();$("#lock").hidden=false}
+function drawLock(msg){
+  const title=lockTitle||({unlock:"Enter your PIN",check:"Enter your current PIN",set:pinFirst?"Enter the new PIN again":"Choose a 4-digit PIN"})[lockMode];
+  $("#lock").innerHTML=`<div class="lock-in"><div class="lock-brand">Pocket Listings</div><h2>${title}</h2>
+   <div class="dots" aria-label="${pinBuf.length} of 4 digits">${[0,1,2,3].map(i=>`<i class="${i<pinBuf.length?"on":""}"></i>`).join("")}</div>
+   <p class="lock-msg" aria-live="polite">${msg||""}</p>
+   <div class="keys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-key="${n}">${n}</button>`).join("")}${lockMode==="unlock"?"<span></span>":`<button data-key="x" class="k-sm">Cancel</button>`}<button data-key="0">0</button><button data-key="b" class="k-sm" aria-label="Delete digit">⌫</button></div></div>`;
+}
+function lockKey(k){
+  if(k==="x"){$("#lock").hidden=true;lockCb=null;return}
+  if(k==="b"){pinBuf=pinBuf.slice(0,-1);drawLock();return}
+  if(pinBuf.length>=4)return;pinBuf+=k;drawLock();
+  if(pinBuf.length<4)return;
+  setTimeout(()=>{
+    if(lockMode==="set"){
+      if(!pinFirst){pinFirst=pinBuf;pinBuf="";drawLock();return}
+      if(pinFirst!==pinBuf){pinFirst="";pinBuf="";drawLock("PINs didn't match. Try again.");return}
+      saveSettings({pin:pinBuf});$("#lock").hidden=true;toast("PIN set");if(!$("#settings").hidden)renderSettings();return;
+    }
+    if(pinBuf===ST().pin){$("#lock").hidden=true;const cb=lockCb;lockCb=null;cb&&cb()}
+    else{pinBuf="";drawLock("Wrong PIN. Try again.")}
+  },150);
+}
+let hiddenAt=0;
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(ST().pin&&hiddenAt&&Date.now()-hiddenAt>60000&&$("#lock").hidden)showLock("unlock");
+});
+
+/* ---------- language (English / Bahasa Melayu) ---------- */
+const BM={
+"Opening your portfolio…":"Membuka portfolio anda…","Search name, area, ref no.":"Cari nama, kawasan, no. rujukan","Filters":"Penapis","Settings":"Tetapan","Client mode":"Mod klien","Client mode on":"Mod klien aktif",
+"All":"Semua","For sale":"Dijual","For rent":"Untuk disewa","Active + offer":"Aktif + tawaran","Any status":"Semua status","Active":"Aktif","Under offer":"Dalam tawaran","Sold":"Terjual","Rented":"Sudah disewa","Expired":"Tamat","Closed":"Selesai",
+"Loading listings…":"Memuatkan hartanah…","No listings yet":"Belum ada hartanah","Load 3 example listings":"Muatkan 3 contoh hartanah","Nothing matches":"Tiada padanan","Try a different search or status.":"Cuba carian atau status lain.","+ New listing":"+ Hartanah baru","EXAMPLE":"CONTOH","Example":"Contoh",
+"Add your first property with":"Tambah hartanah pertama anda dengan",". Specs, owner notes and photo links stay with you; only the public parts go into WhatsApp messages.":". Spesifikasi, nota pemilik dan gambar kekal dengan anda; hanya bahagian awam masuk ke mesej WhatsApp.",
+"Saved to your Claude account. Only you can see these listings.":"Disimpan dalam akaun Claude anda. Hanya anda boleh melihat hartanah ini.","Saved on this phone. Export a backup from Settings now and then.":"Disimpan dalam telefon ini. Eksport sandaran dari Tetapan sekali-sekala.","Saved on this device only. Open the app signed in to keep listings in your account.":"Disimpan dalam peranti ini sahaja.",
+"← Back":"← Kembali","Bedrooms":"Bilik tidur","Bathrooms":"Bilik air","Car parks":"Parkir","Built-up":"Keluasan binaan","Land":"Tanah","Furnishing":"Perabot","Tenure":"Pegangan","Title":"Hakmilik","Bumi lot":"Lot Bumi","Floor":"Tingkat","Facing":"Menghadap","Maint. fee":"Yuran penyelenggaraan","Yes":"Ya","No":"Tidak",
+"Highlights · shared":"Kelebihan · dikongsi","Facilities":"Kemudahan","Internal · never shared":"Dalaman · tidak dikongsi","Commission:":"Komisen:","Media":"Media","Video tour":"Video lawatan","Location map":"Peta lokasi","Social video":"Video sosial","Edit":"Sunting","Delete":"Padam","Tap to confirm":"Tekan untuk sahkan","Negotiable":"Boleh runding","Listing":"Hartanah",
+"Condominium":"Kondominium","Serviced Residence":"Servis Residensi","Apartment":"Apartmen","Terrace":"Teres","Bungalow":"Banglo","Townhouse":"Rumah Bandar","Shop Lot":"Lot Kedai",
+"Unfurnished":"Tanpa perabot","Partially furnished":"Separa perabot","Fully furnished":"Lengkap perabot","Freehold":"Pegangan bebas","Leasehold":"Pajakan","Leasehold 99 yrs":"Pajakan 99 tahun","Malay Reserve":"Rizab Melayu","Individual":"Individu","Master":"Induk",
+"Cancel":"Batal","Edit listing":"Sunting hartanah","New listing":"Hartanah baru","Save":"Simpan","Basics":"Asas","Listing name":"Nama hartanah","Ref no.":"No. rujukan","Listing type":"Jenis iklan","Property type":"Jenis hartanah","Price":"Harga","Price (RM, monthly if rent)":"Harga (RM, bulanan jika sewa)","Maintenance (RM/mo)":"Penyelenggaraan (RM/bln)",
+"Location":"Lokasi","Area / project":"Kawasan / projek","City":"Bandar","State":"Negeri","Specs":"Spesifikasi","Built-up (sqft)":"Keluasan binaan (kps)","Land (sqft)":"Tanah (kps)","Floor level":"Aras tingkat","Notes":"Nota","Highlights (goes into WhatsApp messages)":"Kelebihan (masuk ke mesej WhatsApp)",
+"Owner name · private":"Nama pemilik · peribadi","Owner phone · private":"Telefon pemilik · peribadi","Commission · private":"Komisen · peribadi","Internal notes · never shared":"Nota dalaman · tidak dikongsi","Photos & media":"Gambar & media","Photos from gallery":"Gambar dari galeri","Add from gallery":"Tambah dari galeri",
+"Or photo links (one per line, https://…)":"Atau pautan gambar (satu setiap baris, https://…)","Video tour link":"Pautan video lawatan","Google Maps link":"Pautan Google Maps","In Google Maps: drop a pin, Share, Copy link":"Di Google Maps: letak pin, Kongsi, Salin pautan","Save listing":"Simpan hartanah","No gallery photos yet.":"Belum ada gambar galeri.","Adding photos…":"Menambah gambar…",
+"Quick":"Ringkas","Full specs":"Spesifikasi penuh","Emoji icons":"Ikon emoji","✦ Rewrite with AI":"✦ Tulis semula dengan AI","Client WhatsApp number (optional)":"Nombor WhatsApp klien (pilihan)","Copy":"Salin","Share…":"Kongsi…","Open WhatsApp":"Buka WhatsApp","Writing…":"Sedang menulis…",
+"AI writes a catchier caption from the public specs. Owner details and internal notes are never sent.":"AI menulis teks lebih menarik daripada spesifikasi awam. Butiran pemilik dan nota dalaman tidak dihantar.",
+"Min bedrooms":"Bilik tidur minimum","Max price (RM)":"Harga maksimum (RM)","Sort by":"Susun ikut","Any type":"Semua jenis","Any":"Semua","No limit":"Tiada had","Recently updated":"Terkini dikemas kini","Price: low to high":"Harga: rendah ke tinggi","Price: high to low":"Harga: tinggi ke rendah","Lowest RM psf":"RM psf terendah","Reset":"Set semula","Show results":"Tunjuk hasil",
+"Photos for the video":"Gambar untuk video","Preview":"Pratonton","Create video":"Cipta video","Caption":"Kapsyen","Uses the public specs only.":"Hanya guna spesifikasi awam.","Post it":"Siarkan","Save to gallery":"Simpan ke galeri","Share video + caption":"Kongsi video + kapsyen","Copy caption":"Salin kapsyen","Download video":"Muat turun video","Use photo links":"Guna pautan gambar",
+"No photos yet. The video uses a plain background until you add some.":"Belum ada gambar. Video guna latar biasa sehingga anda tambah gambar.",
+"Your profile":"Profil anda","Signs off every WhatsApp message, caption and video.":"Digunakan sebagai penutup setiap mesej, kapsyen dan video.","Your name":"Nama anda","Phone":"Telefon","Agency":"Agensi","REN / REA no.":"No. REN / REA","Claude API key (for AI rewrite, stays on this phone)":"Kunci API Claude (untuk AI, kekal dalam telefon ini)",
+"Appearance":"Paparan","Theme":"Tema","System":"Sistem","Light":"Cerah","Dark":"Gelap","Accent colour":"Warna utama","Text size":"Saiz teks","Small":"Kecil","Normal":"Biasa","Large":"Besar","Compact list":"Senarai padat","Smaller cards so more listings fit on screen":"Kad lebih kecil supaya lebih banyak hartanah muat di skrin",
+"Client meetings & privacy":"Pertemuan klien & privasi","Hides owner contacts, internal notes, commission, Edit and Delete so you can hand the phone to a client":"Sembunyi kenalan pemilik, nota dalaman, komisen, Sunting dan Padam supaya anda boleh beri telefon kepada klien",
+"App lock":"Kunci aplikasi","A 4-digit PIN is needed to open the app and to leave client mode.":"PIN 4 digit diperlukan untuk buka aplikasi dan keluar mod klien.","Ask for a 4-digit PIN when the app opens and before leaving client mode.":"Minta PIN 4 digit semasa aplikasi dibuka dan sebelum keluar mod klien.","Set PIN":"Tetapkan PIN","Change PIN":"Tukar PIN","Remove PIN":"Buang PIN",
+"Sharing":"Perkongsian","Default WhatsApp style":"Gaya WhatsApp lalai","Start messages with emoji. Turn off if a phone shows boxes instead":"Mulakan mesej dengan emoji. Matikan jika telefon tunjuk kotak","Custom sign-off line":"Baris penutup sendiri","Extra hashtags for social captions":"Hashtag tambahan untuk kapsyen sosial",
+"Video colour":"Warna video","Show price in video":"Tunjuk harga dalam video","Turn off when you'd rather discuss price in private":"Matikan jika anda mahu bincang harga secara peribadi","Video length":"Panjang video","Short (10s)":"Pendek (10s)","Standard (16s)":"Standard (16s)",
+"Listings":"Hartanah","Ref no. prefix":"Awalan no. rujukan","Default area":"Kawasan lalai","Default city":"Bandar lalai","Default state":"Negeri lalai","Open the list on":"Buka senarai pada","Newest":"Terbaru","Price ↑":"Harga ↑","Price ↓":"Harga ↓","Hide closed listings":"Sembunyi hartanah selesai","Sold, rented and expired listings stay out of the list and filters":"Hartanah terjual, disewa dan tamat tidak dipaparkan",
+"Language":"Bahasa","Changes the app's buttons and labels. Pick the WhatsApp message language in the share screen.":"Menukar butang dan label aplikasi. Pilih bahasa mesej WhatsApp di skrin kongsi.","Backup":"Sandaran","Export backup":"Eksport sandaran","Import backup":"Import sandaran","Restore listings":"Pulihkan hartanah","Paste backup text here":"Tampal teks sandaran di sini",
+"Listings live on this phone. Export a backup now and then (send it to yourself on WhatsApp or Drive). Gallery photos are not part of the backup.":"Hartanah disimpan dalam telefon ini. Eksport sandaran sekali-sekala (hantar kepada diri sendiri di WhatsApp atau Drive). Gambar galeri tidak termasuk dalam sandaran.",
+"Green":"Hijau","Navy":"Biru laut","Maroon":"Marun","Gold":"Emas","Teal":"Hijau kebiruan","Black":"Hitam",
+"Enter your PIN":"Masukkan PIN anda","Enter PIN to leave client mode":"Masukkan PIN untuk keluar mod klien","Choose a 4-digit PIN":"Pilih PIN 4 digit","Enter the new PIN again":"Masukkan PIN baru sekali lagi","Enter your current PIN":"Masukkan PIN semasa","Wrong PIN. Try again.":"PIN salah. Cuba lagi.","PINs didn't match. Try again.":"PIN tidak sepadan. Cuba lagi.",
+"Listing saved":"Hartanah disimpan","✦ Fill from brochure":"✦ Isi dari brosur","Scan brochure":"Imbas brosur","Which unit? (optional, e.g. Type B intermediate)":"Unit mana? (pilihan, cth. Jenis B tengah)","Newest first":"Terbaru dahulu","Price: low → high":"Harga: rendah → tinggi","Price: high → low":"Harga: tinggi → rendah","Size: small → large":"Saiz: kecil → besar","Size: large → small":"Saiz: besar → kecil","Biggest":"Terbesar","Exact location":"Lokasi tepat","📍 Pin on map":"📍 Pin di peta","Move pin":"Alih pin","Remove pin":"Buang pin","Pinned":"Dipin","· Pinned":"· Dipin","Pin location":"Pin lokasi","Save pin":"Simpan pin","Search":"Cari","Map":"Peta","Satellite":"Satelit","Location pinned":"Lokasi dipin","🗺️ Google Maps":"🗺️ Google Maps","🧭 Directions":"🧭 Arah","Opens your pinned location.":"Membuka lokasi yang dipin.","✦ Scan brochure":"✦ Imbas brosur","Reading the brochure…":"Membaca brosur…","Drag the map so the pin sits on the property.":"Seret peta supaya pin berada di atas hartanah.","Without a pin, Google Maps searches the name and area, which can be off.":"Tanpa pin, Google Maps mencari nama dan kawasan, yang mungkin kurang tepat.","Social":"Sosial","Post to social":"Siar ke media sosial","Photos to post":"Gambar untuk disiarkan","Add info card":"Tambah kad info","A photo with price, specs and your contact, posted first":"Gambar dengan harga, spesifikasi dan kenalan anda, disiarkan dahulu","Listing title":"Tajuk iklan","Copy title":"Salin tajuk","Description":"Penerangan","Copy description":"Salin penerangan","Details for the form fields":"Butiran untuk ruangan borang","Copy details":"Salin butiran","Upload":"Muat naik","Save photos to gallery":"Simpan gambar ke galeri","Open iProperty":"Buka iProperty","Download info card":"Muat turun kad info","Copy caption":"Salin kapsyen","Copied":"Disalin","Preparing photos…":"Menyediakan gambar…","Saving…":"Sedang menyimpan…","Photo post with the full details":"Siaran gambar dengan butiran penuh","Short post with photos":"Siaran ringkas dengan gambar","Title, description and photos ready to upload":"Tajuk, penerangan dan gambar sedia dimuat naik","Instagram, Telegram, Mudah, PropertyGuru and more":"Instagram, Telegram, Mudah, PropertyGuru dan lain-lain","Others":"Lain-lain","16-second vertical video with photos, price and your contact":"Video menegak 16 saat dengan gambar, harga dan kenalan anda","Pinch or double-tap to zoom · swipe for more":"Cubit atau ketik dua kali untuk zum · leret untuk lagi","Pinch or double-tap to zoom":"Cubit atau ketik dua kali untuk zum","🗺️ View on Google Maps":"🗺️ Lihat di Google Maps","Map ›":"Peta ›","Location not set":"Lokasi belum ditetapkan","Opens your saved map pin.":"Membuka pin peta yang disimpan.","Searches the listing name and area. Paste a Google Maps link in Edit for an exact pin.":"Mencari nama dan kawasan hartanah. Tampal pautan Google Maps dalam Sunting untuk pin tepat.","MAIN":"UTAMA","★ Set as main photo":"★ Jadikan gambar utama","Main photo updated":"Gambar utama dikemas kini","Tap ★ to choose the main photo. Use ‹ › to change the order.":"Tekan ★ untuk pilih gambar utama. Guna ‹ › untuk tukar susunan.","Listing deleted":"Hartanah dipadam","Copied. Paste it into WhatsApp.":"Disalin. Tampal ke WhatsApp.","PIN set":"PIN ditetapkan","PIN removed":"PIN dibuang","Client mode on: private details hidden":"Mod klien aktif: butiran peribadi disembunyikan","Client mode off":"Mod klien dimatikan","Video ready":"Video sedia","Caption copied":"Kapsyen disalin","3 example listings added":"3 contoh hartanah ditambah"
+};
+const BMRX=[[/^(\d+) listings?$/,"$1 hartanah"],[/^(\d+) bed$/,"$1 bilik"],[/^(\d+) bath$/,"$1 bilik air"],[/^Photos \((\d+)\)$/,"Gambar ($1)"],[/^Share (.+)$/,"Kongsi $1"],[/^(\d+) photos? added$/,"$1 gambar ditambah"]];
+function trStr(k){
+  if(BM[k]!==undefined)return BM[k];
+  for(const[rx,to]of BMRX)if(rx.test(k))return k.replace(rx,to);
+  if(k.includes(" · ")){const parts=k.split(" · ");const out=parts.map(x=>trStr(x)??x);if(out.some((x,i)=>x!==parts[i]))return out.join(" · ")}
+  return null;
+}
+const ORIG=new WeakMap();let LANG="en",langObs=null;
+function trTree(root){
+  if(LANG!=="bm"||!root)return;
+  if(root.nodeType===3){trText(root);return}
+  if(root.nodeType!==1||root.closest?.("textarea,script,style,[data-raw]"))return;
+  if(root.placeholder){const t=trStr(root.placeholder.trim());if(t){root.dataset.phOrig=root.placeholder;root.placeholder=t}}
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,{acceptNode:n=>n.nodeType===1&&/^(TEXTAREA|SCRIPT|STYLE)$/.test(n.tagName)||n.dataset?.raw!==undefined?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  let n;while((n=w.nextNode())){if(n.nodeType===3)trText(n);else if(n.placeholder){const t=trStr(n.placeholder.trim());if(t){n.dataset.phOrig=n.placeholder;n.placeholder=t}}}
+}
+function trText(n){const s=n.data,k=s.trim();if(!k||ORIG.has(n))return;const t=trStr(k);if(t!=null&&t!==k){ORIG.set(n,s);n.data=s.replace(k,t)}}
+function setLang(lang){
+  if(lang===LANG)return;LANG=lang;document.documentElement.lang=lang==="bm"?"ms":"en";
+  if(lang==="bm"){
+    trTree(document.body);
+    if(!langObs){langObs=new MutationObserver(ms=>{if(LANG!=="bm")return;ms.forEach(m=>m.addedNodes.forEach(trTree))});langObs.observe(document.body,{childList:true,subtree:true})}
+  }else{
+    const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let n;
+    while((n=w.nextNode())){if(n.nodeType===3&&ORIG.has(n)){n.data=ORIG.get(n);ORIG.delete(n)}else if(n.dataset?.phOrig){n.placeholder=n.dataset.phOrig;delete n.dataset.phOrig}}
+  }
+}
+
+/* ---------- gallery photos on listings ---------- */
+const EP={list:[],added:[],removed:[]};
+function blobB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=rej;r.readAsDataURL(blob)})}
+async function shrinkPhoto(file,max=1600,q=.82){
+  const url=URL.createObjectURL(file);
+  try{const img=await loadImg(url);const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,"image/jpeg",q))}
+  finally{URL.revokeObjectURL(url)}
+}
+async function storePhoto(blob){
+  if(APP){const u=AndroidBridge.savePhoto(await blobB64(blob));if(!u)throw new Error("save failed");return u}
+  if(window.__STANDALONE)return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result));r.onerror=rej;r.readAsDataURL(blob)});
+  let assets=null;try{assets=window.claude?.use?await claude.use("assets"):null}catch(e){}
+  if(!assets)throw new Error("Photo uploads aren't available in this view.");
+  return (await assets.upload(blob)).url;
+}
+function dropPhoto(u){if(APP&&String(u).startsWith("file:"))try{AndroidBridge.deletePhoto(u)}catch(e){}}
+function photoForCanvas(u){return APP&&String(u).startsWith("file:")?AndroidBridge.readPhoto(u):u}
+function renderEPhotos(){
+  const box=$("#ephotos");if(!box)return;
+  const main=EP.main&&EP.list.includes(EP.main)?EP.main:(EP.main?"":EP.list[0]);
+  box.className="ephotos";
+  box.innerHTML=EP.list.length?EP.list.map((u,i)=>`<div class="ep${u===main?" is-main":""}">
+     <img src="${esc(u)}" alt="Photo ${i+1}">${u===main?'<span class="ep-tag">MAIN</span>':""}
+     <button type="button" class="ep-x" data-eprm="${i}" aria-label="Remove photo ${i+1}">×</button>
+     <div class="ep-ctl"><button type="button" data-epmv="${i}:-1" aria-label="Move left" ${i?"":"disabled"}>‹</button><button type="button" data-epmain="${i}" aria-pressed="${u===main}" aria-label="Set as main photo">★</button><button type="button" data-epmv="${i}:1" aria-label="Move right" ${i<EP.list.length-1?"":"disabled"}>›</button></div>
+   </div>`).join(""):`<span style="color:var(--muted);font-size:13px">No gallery photos yet.</span>`;
+  const hint=$("#ephotoHint");if(hint)hint.hidden=EP.list.length<2;
+}
+async function addGalleryPhotos(files){
+  const note=$("#ephotoNote");if(note)note.textContent="Adding photos…";
+  let ok=0,err="";
+  for(const f of [...files].slice(0,15)){
+    try{const u=await storePhoto(window.__STANDALONE?await shrinkPhoto(f,1280,.7):await shrinkPhoto(f));EP.list.push(u);EP.added.push(u);ok++;renderEPhotos()}catch(e){err=e.message}
+  }
+  if(note)note.textContent=ok?`${ok} photo${ok>1?"s":""} added`:(err||"Couldn't add those photos.");
+}
+function cancelEdit(){EP.added.forEach(dropPhoto);EP.added=[];EP.removed=[];$("#edit").hidden=true}
+document.addEventListener("change",e=>{if(e.target.id==="efile"){const fs=e.target.files;if(fs&&fs.length)addGalleryPhotos(fs);e.target.value=""}});
+document.addEventListener("click",e=>{
+  const rm=e.target.closest("[data-eprm]");
+  if(rm){const u=EP.list.splice(+rm.dataset.eprm,1)[0];if(EP.main===u)EP.main="";if(EP.added.includes(u)){dropPhoto(u);EP.added=EP.added.filter(x=>x!==u)}else EP.removed.push(u);renderEPhotos();return}
+  const mv=e.target.closest("[data-epmv]");
+  if(mv){const[i,d]=mv.dataset.epmv.split(":").map(Number),j=i+d;if(j>=0&&j<EP.list.length){[EP.list[i],EP.list[j]]=[EP.list[j],EP.list[i]];renderEPhotos()}return}
+  const mk=e.target.closest("[data-epmain]");
+  if(mk){const i=+mk.dataset.epmain,u=EP.list[i];EP.list.splice(i,1);EP.list.unshift(u);EP.main=u;renderEPhotos();return}
+});
+
+/* ---------- settings events ---------- */
+document.addEventListener("click",e=>{
+  const k=e.target.closest("[data-key]");if(k){lockKey(k.dataset.key);return}
+  const b=e.target.closest("[data-set]");
+  if(b){const key=b.dataset.set,val=b.dataset.val;saveSettings({[key]:val});
+    const map={defMode:"mode",defStatus:"status",defSort:"sort"};if(map[key])S[map[key]]=val;
+    renderSettings();render();return}
+  const t=e.target.closest("button");if(!t)return;
+  if(t.hasAttribute("data-sclose")){$("#settings").hidden=true;render();return}
+  switch(t.id){
+    case "clientBtn":toggleClient();break;
+    case "pinSet":showLock("set");break;
+    case "pinChange":showLock("check",()=>showLock("set"));break;
+    case "pinRemove":showLock("check",()=>{saveSettings({pin:""});toast("PIN removed");renderSettings()});break;
+  }
+});
+document.addEventListener("change",e=>{
+  const k=e.target.dataset?.setToggle;if(!k)return;
+  if(k==="clientMode"){e.target.checked=ST().clientMode;toggleClient();return}
+  saveSettings({[k]:e.target.checked});render();
+});
+document.addEventListener("input",e=>{
+  const d=e.target.dataset||{};
+  if(d.setText!==undefined)saveSettings({[d.setText]:e.target.value},true);
+  else if(d.prof){S.profile={...S.profile,[d.prof]:e.target.value.trim()};persistSoon(700)}
+});
+
+/* ---------- detail photo viewer ---------- */
+function showPhoto(i){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;const ps=photos(l);if(!ps.length)return;
+  i=(i+ps.length)%ps.length;S.phIdx=i;
+  $("#hero").innerHTML=`<img src="${esc(ps[i])}" alt="Photo ${i+1}"><span class="ph-zoom" aria-hidden="true">⤢</span>${i===0?'<span class="ph-main">MAIN</span>':""}<span class="ph-count">${i+1}/${ps.length}</span>`;
+  document.querySelectorAll(".strip button").forEach((b,k)=>b.classList.toggle("on",k===i));
+  document.querySelector(".strip button.on")?.scrollIntoView({block:"nearest",inline:"nearest"});
+  const row=$("#mainRow");if(row)row.hidden=i===0;
+}
+let swX=null,swY=0;
+document.addEventListener("touchstart",e=>{if(!$("#viewer").hidden)return;if(e.target.closest("#hero")&&e.touches.length===1){swX=e.touches[0].clientX;swY=e.touches[0].clientY}},{passive:true});
+document.addEventListener("touchend",e=>{
+  if(swX===null)return;const t=e.changedTouches[0],dx=t.clientX-swX,dy=t.clientY-swY;swX=null;
+  if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){S.swipedAt=Date.now();showPhoto((S.phIdx||0)+(dx<0?1:-1))}
+});
+document.addEventListener("click",async e=>{
+  if(e.target.closest("#hero")&&!$("#detail").hidden){if(Date.now()-(S.swipedAt||0)>500)openViewer(S.phIdx||0);return}
+  if(!e.target.closest("#mainBtn"))return;
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  const u=photos(l)[S.phIdx||0];if(!u)return;
+  try{await saveListing({...l,mainPhoto:u});toast("Main photo updated");openDetail(l.id)}catch(err){toast("Couldn't save. Try again.")}
+});
+
+/* ---------- full-screen photo viewer (whole photo, pinch/double-tap zoom, swipe) ---------- */
+const VWS={i:0,list:[],scale:1,x:0,y:0,pts:new Map(),start:null,lastTap:0};
+function openViewer(i){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  VWS.list=photos(l);if(!VWS.list.length)return;
+  const v=$("#viewer");
+  v.innerHTML=`<div class="vw-stage" id="vwStage"><img id="vwImg" alt=""></div>
+   <div class="vw-top"><span class="vw-count" id="vwCount"></span><button class="vw-btn" id="vwClose" aria-label="Close">×</button></div>
+   ${VWS.list.length>1?`<button class="vw-btn vw-nav vw-prev" id="vwPrev" aria-label="Previous photo">‹</button><button class="vw-btn vw-nav vw-next" id="vwNext" aria-label="Next photo">›</button>`:""}
+   <div class="vw-hint">Pinch or double-tap to zoom${VWS.list.length>1?" · swipe for more":""}</div>`;
+  v.hidden=false;viewerGo(i);
+}
+function closeViewer(){$("#viewer").hidden=true;$("#viewer").innerHTML="";if(!$("#detail").hidden&&S.curId)showPhoto(VWS.i)}
+function viewerGo(i){
+  const n=VWS.list.length;VWS.i=(i+n)%n;VWS.scale=1;VWS.x=0;VWS.y=0;
+  $("#vwImg").src=VWS.list[VWS.i];$("#vwImg").alt="Photo "+(VWS.i+1);
+  $("#vwCount").textContent=n>1?`${VWS.i+1} / ${n}`:"";
+  vwApply(false);
+}
+function vwClamp(){
+  const img=$("#vwImg"),st=$("#vwStage");if(!img||!st)return;
+  const w=img.clientWidth*VWS.scale,h=img.clientHeight*VWS.scale,mx=Math.max(0,(w-st.clientWidth)/2),my=Math.max(0,(h-st.clientHeight)/2);
+  VWS.x=Math.min(mx,Math.max(-mx,VWS.x));VWS.y=Math.min(my,Math.max(-my,VWS.y));
+}
+function vwApply(anim){const img=$("#vwImg");if(!img)return;img.style.transition=anim&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"transform .2s ease-out":"none";img.style.transform=`translate(${VWS.x}px,${VWS.y}px) scale(${VWS.scale})`}
+function vwDist(){const p=[...VWS.pts.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)}
+document.addEventListener("pointerdown",e=>{
+  if(!e.target.closest("#vwStage"))return;
+  VWS.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(VWS.pts.size===1)VWS.start={x:e.clientX,y:e.clientY,ox:VWS.x,oy:VWS.y,t:Date.now(),moved:false};
+  if(VWS.pts.size===2)VWS.pinch={d:vwDist(),s:VWS.scale};
+});
+document.addEventListener("pointermove",e=>{
+  if(!VWS.pts.has(e.pointerId))return;
+  VWS.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(VWS.pts.size===2&&VWS.pinch){VWS.scale=Math.min(5,Math.max(1,VWS.pinch.s*vwDist()/VWS.pinch.d));if(VWS.scale===1){VWS.x=0;VWS.y=0}vwClamp();vwApply(false);if(VWS.start)VWS.start.moved=true;return}
+  if(VWS.pts.size===1&&VWS.start){
+    const dx=e.clientX-VWS.start.x,dy=e.clientY-VWS.start.y;if(Math.abs(dx)+Math.abs(dy)>8)VWS.start.moved=true;
+    if(VWS.scale>1){VWS.x=VWS.start.ox+dx;VWS.y=VWS.start.oy+dy;vwClamp();vwApply(false)}
+  }
+});
+function vwEnd(e){
+  if(!VWS.pts.has(e.pointerId))return;
+  const st=VWS.start;VWS.pts.delete(e.pointerId);
+  if(VWS.pts.size<2)VWS.pinch=null;
+  if(VWS.pts.size>0||!st)return;
+  VWS.start=null;
+  const dx=e.clientX-st.x,dy=e.clientY-st.y;
+  if(VWS.scale===1&&Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3&&VWS.list.length>1){viewerGo(VWS.i+(dx<0?1:-1));return}
+  if(VWS.scale===1&&dy>110&&Math.abs(dy)>Math.abs(dx)*1.5){closeViewer();return}
+  if(!st.moved){
+    const now=Date.now();
+    if(now-VWS.lastTap<300){VWS.lastTap=0;
+      if(VWS.scale>1){VWS.scale=1;VWS.x=0;VWS.y=0}
+      else{const r=$("#vwStage").getBoundingClientRect();VWS.scale=2.5;VWS.x=(r.width/2-(e.clientX-r.left))*1.5;VWS.y=(r.height/2-(e.clientY-r.top))*1.5;vwClamp()}
+      vwApply(true);
+    }else VWS.lastTap=now;
+  }
+}
+document.addEventListener("pointerup",vwEnd);document.addEventListener("pointercancel",vwEnd);
+document.addEventListener("wheel",e=>{if(!e.target.closest("#vwStage"))return;e.preventDefault();VWS.scale=Math.min(5,Math.max(1,VWS.scale*(e.deltaY<0?1.15:1/1.15)));if(VWS.scale===1){VWS.x=0;VWS.y=0}vwClamp();vwApply(false)},{passive:false});
+document.addEventListener("click",e=>{
+  if($("#viewer").hidden)return;
+  if(e.target.closest("#vwClose"))closeViewer();
+  else if(e.target.closest("#vwPrev"))viewerGo(VWS.i-1);
+  else if(e.target.closest("#vwNext"))viewerGo(VWS.i+1);
+});
+document.addEventListener("keydown",e=>{if($("#viewer").hidden)return;if(e.key==="Escape")closeViewer();else if(e.key==="ArrowRight")viewerGo(VWS.i+1);else if(e.key==="ArrowLeft")viewerGo(VWS.i-1)});
+
+
+/* ---------- Social: TikTok / Facebook / Threads / iProperty / Others ---------- */
+const PLATFORMS={
+  tiktok:{name:"TikTok / Reels",icon:"🎬",desc:"16-second vertical video with photos, price and your contact"},
+  facebook:{name:"Facebook",icon:"📘",desc:"Photo post with the full details",pkgs:["com.facebook.katana","com.facebook.lite"],max:10},
+  threads:{name:"Threads",icon:"🧵",desc:"Short post with photos",pkgs:["com.instagram.barcelona"],max:10,limit:500},
+  iproperty:{name:"iProperty",icon:"🏠",desc:"Title, description and photos ready to upload"},
+  others:{name:"Others",icon:"📤",desc:"Instagram, Telegram, Mudah, PropertyGuru and more",max:10}
+};
+function openSocialMenu(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="Post to social"><div class="drawer-in">
+   <div class="grab"></div><h2 style="font-size:19px">Post ${esc(l.ref||"listing")} to social</h2>
+   <div class="soc-list">${Object.entries(PLATFORMS).map(([k,p])=>`<button class="soc-item" data-social="${k}"><span class="soc-ic" aria-hidden="true">${p.icon}</span><span class="soc-txt"><b>${p.name}</b><small>${p.desc}</small></span><span class="soc-go" aria-hidden="true">›</span></button>`).join("")}</div>
+  </div></div>`;
+}
+const PS={pf:"",sel:[],card:true,cardData:"",busy:false};
+const hashList=(l,max)=>{
+  const tag=s=>"#"+String(s||"").replace(/[^A-Za-z0-9]/g,"");const sale=l.listingType==="sale";
+  const base=["#PropertyMalaysia",l.city&&tag(l.city+"Property"),l.area&&tag(l.area),sale?"#RumahUntukDijual":"#RumahSewa",tag(l.propertyType),sale?"#PropertyForSale":"#ForRent"].filter(Boolean);
+  const extra=ST().hashtags.split(/[\s,]+/).filter(Boolean).map(h=>h.startsWith("#")?h:"#"+h);
+  return [...new Set([...extra,...base])].slice(0,max).join(" ");
+};
+const contactLine=p=>[p.name,p.phone].filter(Boolean).join(" ");
+const agencyLine=p=>p.agency?`${p.agency}${p.ren?` (${p.ren})`:""}`:"";
+function captionFor(pf,l){
+  const sale=l.listingType==="sale",p=S.profile,pf2=psf(l),where=[l.area,l.city,l.state].filter(Boolean).join(", ");
+  let t="";
+  if(pf==="facebook"){
+    t=[`🏡 ${sale?"FOR SALE":"FOR RENT"} | ${l.title}`,where?`📍 ${where}`:"","",
+      `💰 RM ${fmt(l.price)}${sale?"":"/month"}${pf2?` (RM${fmt(pf2)} psf)`:""}${l.negotiable?" · Negotiable":""}`,
+      [l.beds?`🛏️ ${l.beds} bedrooms`:"",l.baths?`🛁 ${l.baths} bathrooms`:"",l.carparks?`🚗 ${l.carparks} car parks`:""].filter(Boolean).join(" · "),
+      [l.builtUp?`📐 ${fmt(l.builtUp)} sqft built-up`:"",l.landArea?`${fmt(l.landArea)} sqft land`:""].filter(Boolean).join(" · "),
+      [l.tenure,l.titleType&&l.titleType+" title",l.furnishing,l.bumiLot?"Bumi lot":""].filter(Boolean).length?`📜 ${[l.tenure,l.titleType&&l.titleType+" title",l.furnishing,l.bumiLot?"Bumi lot":""].filter(Boolean).join(" · ")}`:"",
+      l.highlights?`\n✨ ${l.highlights}`:"",l.facilities?`🏊 Facilities: ${l.facilities}`:"","",
+      ST().signOff.trim()||`📩 Comment, PM or WhatsApp ${contactLine(p)||"me"} to arrange a viewing.`,
+      ST().signOff.trim()&&contactLine(p)?contactLine(p):"",agencyLine(p),"",hashList(l,6)].join("\n");
+  }else if(pf==="threads"){
+    const hl=(l.highlights||"").split(/(?<=[.!?])\s/)[0];
+    t=[`🏡 ${sale?"For sale":"For rent"} in ${l.area||l.city||"Klang Valley"}: ${l.title}`,
+      `💰 RM ${fmt(l.price)}${sale?"":"/mo"}${l.negotiable?" (nego)":""}`,
+      [l.beds?`🛏️ ${l.beds}`:"",l.baths?`🛁 ${l.baths}`:"",l.builtUp?`📐 ${fmt(l.builtUp)} sqft`:"",l.tenure||""].filter(Boolean).join(" · "),
+      hl?`✨ ${hl}`:"",`📩 DM for viewing${p.name?` · ${p.name}`:""}`,hashList(l,3)].filter(Boolean).join("\n");
+    if(t.length>500)t=t.slice(0,497)+"…";
+  }else{
+    t=socialCaption(l);
+  }
+  t=t.replace(/\n{3,}/g,"\n\n").trim();
+  return ST().emoji?t:stripEmoji(t);
+}
+function ipropertyText(l){
+  const sale=l.listingType==="sale",p=S.profile,pf2=psf(l);
+  const title=[l.title,[l.beds&&`${l.beds} Bed`,l.baths&&`${l.baths} Bath`].filter(Boolean).join(" "),l.builtUp&&`${fmt(l.builtUp)} sqft`,l.tenure,l.furnishing].filter(Boolean).join(" | ").slice(0,120);
+  const rows=[["Property type",l.propertyType],["Listing",sale?"For sale":"For rent"],["Price",`RM ${fmt(l.price)}${sale?"":" per month"}${l.negotiable?" (negotiable)":""}`],["Price per sqft",pf2?`RM ${fmt(pf2)}`:""],["Location",[l.area,l.city,l.state].filter(Boolean).join(", ")],["Tenure",l.tenure],["Title type",l.titleType],["Bumi lot",l.bumiLot?"Yes":"No"],["Built-up",l.builtUp?`${fmt(l.builtUp)} sqft`:""],["Land area",l.landArea?`${fmt(l.landArea)} sqft`:""],["Bedrooms",l.beds],["Bathrooms",l.baths],["Car parks",l.carparks],["Furnishing",l.furnishing],["Floor",l.floorLevel],["Facing",l.facing]].filter(r=>r[1]||r[1]===0);
+  const details=rows.map(r=>`${r[0]}: ${r[1]}`).join("\n");
+  const desc=[`${l.title}, ${[l.area,l.city].filter(Boolean).join(", ")} ${sale?"for sale":"for rent"}.`,"",
+    "Key details:",...rows.filter(r=>!["Listing","Location"].includes(r[0])).map(r=>`- ${r[0]}: ${r[1]}`),
+    l.highlights?`\nHighlights:\n${l.highlights}`:"",l.facilities?`\nFacilities:\n${l.facilities}`:"","",
+    `Viewing by appointment. Contact ${contactLine(p)||"the agent"}${agencyLine(p)?`, ${agencyLine(p)}`:""}.`].join("\n").replace(/\n{3,}/g,"\n\n").trim();
+  return {title,desc:stripEmoji(desc),details};
+}
+function openPost(pf){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  if(pf==="tiktok"){closeDrawer();openVideo();return}
+  closeDrawer();PS.pf=pf;PS.card=pf!=="iproperty";PS.cardData="";
+  const P=PLATFORMS[pf],ps=photos(l);
+  PS.sel=ps.slice(0,Math.min(P.max||20,ps.length)).map((_,i)=>i);
+  const ip=pf==="iproperty"?ipropertyText(l):null;
+  const lbl=t=>`<span class="lbl">${t}</span>`;
+  $("#post").innerHTML=`<div class="wrap" style="padding-bottom:40px">
+   <div class="screen-bar"><button class="icon-btn" data-pclose>← Back</button><h2>${P.icon} ${P.name} · ${esc(l.ref||"")}</h2></div>
+   <div class="sec">${lbl("Photos to post")}
+    ${ps.length?`<p class="set-hint">Tap to choose photos. The numbers show the order they'll post in.${P.max?` Up to ${P.max}.`:""}</p><div class="pgrid" id="pgrid"></div>`:`<p class="set-hint">This listing has no photos yet. Add some in Edit, or post the info card on its own.</p>`}
+    ${pf!=="iproperty"?`<label class="set-tog"><span><b>Add info card</b><small>A photo with price, specs and your contact, posted first</small></span><input type="checkbox" role="switch" id="pcard" ${PS.card?"checked":""}></label>
+    <div class="cardprev" id="cardPrev" ${PS.card?"":"hidden"}><canvas id="pcanvas" width="1080" height="1350"></canvas></div>`:""}
+   </div>
+   ${pf==="iproperty"?`
+   <div class="sec">${lbl("Listing title")}<textarea class="msg" id="ipTitle" style="min-height:70px">${esc(ip.title)}</textarea><button class="btn btn-ghost" data-copy="ipTitle">Copy title</button></div>
+   <div class="sec">${lbl("Description")}<textarea class="msg" id="ipDesc" style="min-height:260px">${esc(ip.desc)}</textarea>
+    <div class="ai-row"><button class="btn btn-ghost" id="pAi">✦ Rewrite with AI</button><small id="pAiNote">Uses the public specs only.</small></div>
+    <button class="btn btn-ghost" data-copy="ipDesc">Copy description</button></div>
+   <div class="sec">${lbl("Details for the form fields")}<textarea class="msg" id="ipDetails" style="min-height:200px">${esc(ip.details)}</textarea><button class="btn btn-ghost" data-copy="ipDetails">Copy details</button></div>
+   <div class="sec">${lbl("Upload")}
+    <div class="send-row">${APP?`<button class="btn btn-ghost" id="pSave">Save photos to gallery</button>`:`<button class="btn btn-ghost" id="pDlCard" hidden>Download info card</button>`}<a class="btn btn-primary" href="https://www.iproperty.com.my/" target="_blank" rel="noopener" style="text-decoration:none">Open iProperty</a></div>
+    <small class="map-note">Sign in to your iProperty agent account (or the iProperty PRO app), start a new listing, paste the title and description, and upload the photos from your gallery.</small></div>`:`
+   <div class="sec">${lbl("Caption")}<textarea class="msg" id="pcap" style="min-height:240px">${esc(captionFor(pf,l))}</textarea>
+    ${P.limit?`<small class="map-note" id="pcount"></small>`:""}
+    <div class="ai-row"><button class="btn btn-ghost" id="pAi">✦ Rewrite with AI</button><small id="pAiNote">Uses the public specs only.</small></div></div>
+   <div class="sec">${lbl("Post it")}
+    ${APP?`<button class="btn btn-wa" id="pShare" style="width:100%">Share to ${P.name}</button>
+     <div class="send-row"><button class="btn btn-ghost" id="pSave">Save photos to gallery</button><button class="btn btn-ghost" data-copy="pcap">Copy caption</button></div>
+     <small class="map-note">The caption is copied for you. If ${P.name} doesn't fill it in, long-press the text box and tap Paste.</small>`
+     :`<div class="send-row"><button class="btn btn-ghost" data-copy="pcap">Copy caption</button><button class="btn btn-primary" id="pDlCard">Download info card</button></div>
+     <small class="map-note">In the phone app, this button shares the photos and caption straight to ${P.name}.</small>`}
+   </div>`}
+  </div>`;
+  $("#post").hidden=false;$("#post").scrollTop=0;
+  renderPGrid();updatePCount();
+  if(PS.card)(document.fonts?.ready||Promise.resolve()).then(drawInfoCard);
+}
+function renderPGrid(){
+  const l=S.listings.find(x=>x.id===S.curId),g=$("#pgrid");if(!l||!g)return;
+  g.innerHTML=photos(l).map((u,i)=>{const n=PS.sel.indexOf(i);return `<button class="ptile${n>=0?" on":""}" data-psel="${i}" aria-pressed="${n>=0}" aria-label="Photo ${i+1}"><img src="${esc(u)}" alt="">${n>=0?`<span class="pnum">${n+1}</span>`:""}</button>`}).join("");
+}
+function updatePCount(){const c=$("#pcount"),t=$("#pcap");if(c&&t){const lim=PLATFORMS[PS.pf].limit;c.textContent=`${t.value.length} / ${lim} characters`;c.style.color=t.value.length>lim?"var(--red)":""}}
+async function drawInfoCard(){
+  const l=S.listings.find(x=>x.id===S.curId),cv=$("#pcanvas");if(!l||!cv)return;
+  const c=cv.getContext("2d"),W=1080,H=1350,sale=l.listingType==="sale",p=S.profile,vc=VCOLORS[ST().videoColor]||VCOLORS.green;
+  c.fillStyle=vc[2];c.fillRect(0,0,W,H);
+  const ps=photos(l),first=PS.sel.length?ps[PS.sel[0]]:ps[0];
+  const ph=860;
+  if(first){try{let src=photoForCanvas(first);if(/^https?:/.test(src)&&APP)src=await nativeImg(src);const img=await loadImg(src);const s=Math.max(W/img.width,ph/img.height);c.save();c.beginPath();c.rect(0,0,W,ph);c.clip();c.drawImage(img,(W-img.width*s)/2,(ph-img.height*s)/2,img.width*s,img.height*s);c.restore()}catch(e){}}
+  else{const g=c.createLinearGradient(0,0,W,ph);g.addColorStop(0,vc[1]);g.addColorStop(1,vc[2]);c.fillStyle=g;c.fillRect(0,0,W,ph)}
+  const g2=c.createLinearGradient(0,ph-260,0,ph);g2.addColorStop(0,"rgba(0,0,0,0)");g2.addColorStop(1,"rgba(0,0,0,.55)");c.fillStyle=g2;c.fillRect(0,ph-260,W,260);
+  c.textBaseline="alphabetic";
+  const tag=`${sale?"FOR SALE":"FOR RENT"} · ${l.propertyType}`.toUpperCase();
+  c.font=`700 36px ${BF}`;const tw=c.measureText(tag).width+48;c.fillStyle="#e7a748";roundRect(c,56,ph-120,tw,64,32);c.fill();c.fillStyle="#1b1206";c.fillText(tag,80,ph-77);
+  c.fillStyle=vc[2];c.fillRect(0,ph,W,H-ph);
+  c.fillStyle="#fff";c.font=`700 ${fitFont(c,l.title,W-112,64,700,DF)}px ${DF}`;c.fillText(l.title,56,ph+90);
+  c.font=`500 34px ${BF}`;c.fillStyle="rgba(255,255,255,.8)";c.fillText("📍 "+[l.area,l.city].filter(Boolean).join(", "),56,ph+142);
+  const pt=`RM ${fmt(l.price)}${sale?"":"/mo"}`;c.fillStyle="#fff";c.font=`700 ${fitFont(c,pt,W-112,92,700,DF)}px ${DF}`;c.fillText(pt,56,ph+250);
+  const specs=[l.beds&&`${l.beds} bed`,l.baths&&`${l.baths} bath`,l.builtUp&&`${fmt(l.builtUp)} sqft`,l.tenure].filter(Boolean).join("   ·   ");
+  c.font=`600 34px ${BF}`;c.fillStyle="rgba(255,255,255,.9)";c.fillText(specs,56,ph+312);
+  c.fillStyle="rgba(255,255,255,.18)";c.fillRect(56,ph+350,W-112,2);
+  c.font=`600 32px ${BF}`;c.fillStyle="#fff";c.fillText([p.name,p.phone].filter(Boolean).join("  ·  ")||"Contact me for a viewing",56,ph+406);
+  c.font=`500 28px ${BF}`;c.fillStyle="rgba(255,255,255,.7)";c.textAlign="right";c.fillText(agencyLine(p),W-56,ph+406);c.textAlign="left";
+  PS.cardData=cv.toDataURL("image/jpeg",.9);
+}
+async function postFiles(){
+  // returns file:// addresses for the selected photos (+ info card first), saved inside the app for sharing
+  const l=S.listings.find(x=>x.id===S.curId),ps=photos(l),out=[];
+  if(PS.card&&PLATFORMS[PS.pf].max!==undefined){if(!PS.cardData)await drawInfoCard();const u=AndroidBridge.saveShareImage(PS.cardData.split(",")[1]);if(u)out.push(u)}
+  for(const i of PS.sel){
+    const u=ps[i];if(!u)continue;
+    if(String(u).startsWith("file:"))out.push(u);
+    else if(String(u).startsWith("data:")){const f=AndroidBridge.saveShareImage(u.split(",")[1]);if(f)out.push(f)}
+    else{try{const d=await Promise.race([nativeImg(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),20000))]);const f=AndroidBridge.saveShareImage(d.split(",")[1]);if(f)out.push(f)}catch(e){}}
+  }
+  return out;
+}
+async function postShare(){
+  const P=PLATFORMS[PS.pf],cap=$("#pcap").value,b=$("#pShare");b.disabled=true;b.textContent="Preparing photos…";
+  try{
+    AndroidBridge.copy(cap);
+    const files=await postFiles();
+    const r=AndroidBridge.shareImages(JSON.stringify(files),cap,(P.pkgs||[]).join(","));
+    toast(r==="chooser"&&P.pkgs?`${P.name} isn't installed, so pick an app. Caption copied.`:"Caption copied. Paste it if the post box is empty.");
+  }catch(e){toast("Couldn't share: "+String(e.message||e).slice(0,60))}
+  b.disabled=false;b.textContent=`Share to ${P.name}`;
+}
+async function postSave(){
+  const b=$("#pSave");b.disabled=true;const old=b.textContent;b.textContent="Saving…";
+  try{const files=await postFiles();const n=AndroidBridge.saveImagesToGallery(JSON.stringify(files));toast(n?`${n} photo${n>1?"s":""} saved to Pictures › Pocket Listings`:"Couldn't save the photos.")}
+  catch(e){toast("Couldn't save the photos.")}
+  b.disabled=false;b.textContent=old;
+}
+async function postAi(){
+  const l=S.listings.find(x=>x.id===S.curId);if(!l)return;
+  const b=$("#pAi"),note=$("#pAiNote");b.disabled=true;note.textContent="Writing…";
+  const specs=JSON.stringify(publicSpecs(l)),signoff=JSON.stringify([contactLine(S.profile),agencyLine(S.profile)].filter(Boolean).join(", "));
+  const rules={
+    facebook:`a Facebook post for a Malaysian property listing. English with a light Malaysian tone. 12-20 short lines: a friendly hook, location, price, every key spec, 2-3 lifestyle lines based ONLY on the facts, a call to action to comment, PM or WhatsApp for viewing, then 4-6 hashtags. A few emojis at line starts.`,
+    threads:`a Threads post for a Malaysian property listing. Conversational, under 450 characters in total, 4-7 short lines: hook, price, key specs, one standout feature, DM for viewing, 2-3 hashtags. A few emojis.`,
+    others:`a caption for Instagram and other social apps for a Malaysian property listing. English with a light Malaysian tone. 8-14 short lines: hook, price, key specs, 1-2 lifestyle lines based ONLY on the facts, call to action to DM or WhatsApp, then 8-12 hashtags mixing English and Malay.`,
+    iproperty:`a professional property portal description for iProperty Malaysia. Plain text, NO emojis, NO hashtags. 2 short intro paragraphs about the property and location based ONLY on the facts, then a "Key details:" list with "- " bullets, then a line inviting buyers or tenants to arrange a viewing.`
+  }[PS.pf];
+  const prompt=`Write ${rules}\nNever invent facts, distances, amenities or prices. Include this contact: ${signoff}.\nOutput only the text.\nListing JSON: ${specs}`;
+  try{const t=await aiText(prompt);const box=$(PS.pf==="iproperty"?"#ipDesc":"#pcap");box.value=PS.pf==="iproperty"?stripEmoji(t):(ST().emoji?t:stripEmoji(t));updatePCount();note.textContent="AI draft ready. Edit anything before posting."}
+  catch(e){note.textContent=/401|auth/i.test(e.message)?"Your API key was rejected. Check it in Settings.":e.message.slice(0,90)}
+  b.disabled=false;
+}
+async function postDlCard(){
+  let dl=null;try{dl=window.claude?.use?await claude.use("downloads"):null}catch(e){}
+  if(!dl){if(!PS.cardData)await drawInfoCard();await webShareFile(await (await fetch(PS.cardData)).blob(),"info-card.jpg",$("#pcap")?.value||"");return}
+  if(!PS.cardData)await drawInfoCard();
+  const blob=await (await fetch(PS.cardData)).blob();const l=S.listings.find(x=>x.id===S.curId);
+  try{await dl.save({filename:`${(l?.ref||"listing").replace(/[^\w-]/g,"")}-card.jpg`,data:blob});toast("Info card saved")}catch(e){toast(e?.code==="declined"?"Download cancelled.":"Couldn't save the card.")}
+}
+document.addEventListener("click",e=>{
+  const so=e.target.closest("[data-social]");if(so){openPost(so.dataset.social);return}
+  const ts=e.target.closest("[data-psel]");
+  if(ts){const i=+ts.dataset.psel,k=PS.sel.indexOf(i),max=PLATFORMS[PS.pf].max||20;
+    if(k>=0)PS.sel.splice(k,1);else if(PS.sel.length<max)PS.sel.push(i);else{toast(`Up to ${max} photos for ${PLATFORMS[PS.pf].name}.`);return}
+    renderPGrid();if(PS.card&&(k===0||PS.sel.length===1))drawInfoCard();return}
+  const cp=e.target.closest("[data-copy]");
+  if(cp){const box=$("#"+cp.dataset.copy);copyText(box.value).then(()=>toast("Copied")).catch(()=>{box.focus();box.select();toast("Text selected. Long-press to copy.")});return}
+  const t=e.target.closest("button");if(!t)return;
+  if(t.hasAttribute("data-pclose")){$("#post").hidden=true;$("#post").innerHTML="";return}
+  switch(t.id){case "socialBtn":openSocialMenu();break;case "pShare":postShare();break;case "pSave":postSave();break;case "pAi":postAi();break;case "pDlCard":postDlCard();break}
+});
+document.addEventListener("change",e=>{if(e.target.id==="pcard"){PS.card=e.target.checked;$("#cardPrev").hidden=!PS.card;if(PS.card)drawInfoCard()}});
+document.addEventListener("input",e=>{if(e.target.id==="pcap")updatePCount()});
+
+
+/* ---------- number inputs with thousands commas ---------- */
+const digitsOnly=v=>String(v??"").replace(/[^\d]/g,"");
+const numVal=v=>Number(digitsOnly(v))||0;
+document.addEventListener("input",e=>{
+  const el=e.target;if(!el.matches?.("[data-commas]"))return;
+  const pos=el.selectionStart??el.value.length,before=digitsOnly(el.value.slice(0,pos)).length;
+  const d=digitsOnly(el.value).replace(/^0+(?=\d)/,"");
+  el.value=d?Number(d).toLocaleString("en-MY"):"";
+  let i=0,seen=0;while(i<el.value.length&&seen<before){if(/\d/.test(el.value[i]))seen++;i++}
+  try{el.setSelectionRange(i,i)}catch(err){}
+});
+
+/* ---------- AI: read facilities from a brochure ---------- */
+const BROCHURE_PROMPT=`You are reading a Malaysian property brochure (photos or pages of it).
+List the shared facilities and amenities available to residents of this development, for example: swimming pool, gymnasium, 24-hour security, guardhouse, playground, BBQ area, multipurpose hall, jogging track, clubhouse, surau, sky garden, covered parking, lift lobby.
+Only include facilities the brochure clearly shows or states. Do not include features inside the unit (bedrooms, kitchen, air-conditioning) or places outside the development (malls, schools, highways).
+Use short, plain English names with only the first letter capitalised, e.g. "Swimming pool".
+Reply with JSON only, no other text: {"facilities":["..."]}`;
+function fileB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=rej;r.readAsDataURL(file)})}
+function nativeAIContent(key,content){if(!window.AndroidBridge)return webAI(key,content,3000);return new Promise((res,rej)=>{const id="c"+Date.now();aiWaiters[id]={res,rej};AndroidBridge.aiContent(key,"claude-haiku-5-5",JSON.stringify(content),id)})}
+function parseJsonLoose(t){const m=String(t).match(/\{[\s\S]*\}/);if(!m)throw new Error("AI didn't return a list.");return JSON.parse(m[0])}
+async function readBrochure(files,prompt,note){
+  const list=[...files],pdfs=list.filter(f=>f.type==="application/pdf"||/\.pdf$/i.test(f.name)),imgs=list.filter(f=>f.type.startsWith("image/")).slice(0,6);
+  if(!pdfs.length&&!imgs.length)throw new Error("Choose photos or a PDF of the brochure.");
+  if(pdfs.length&&!(APP||window.__STANDALONE))throw new Error("PDF brochures work in the phone app. Here, use photos or screenshots of the brochure pages.");
+  note.textContent=`Reading ${pdfs.length?"the PDF":imgs.length+" page"+(imgs.length>1?"s":"")}… this can take up to a minute.`;
+  if((APP||window.__STANDALONE)){
+    if(!S.profile.apiKey)throw new Error("Add your Claude API key in Settings to use AI.");
+    const content=[];
+    for(const f of pdfs.slice(0,1)){if(f.size>15e6)throw new Error("That PDF is over 15 MB. Use photos of the key pages instead.");content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:await fileB64(f)}})}
+    for(const f of imgs)content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:await blobB64(await shrinkPhoto(f,1568,.85))}});
+    content.push({type:"text",text:prompt});
+    return parseJsonLoose(await nativeAIContent(S.profile.apiKey,content));
+  }
+  let sample=null;try{sample=window.claude?.use?await claude.use("sample"):null}catch(e){}
+  if(!sample)throw new Error("AI isn't available in this view.");
+  let lim={};try{lim=await sample.limits()}catch(e){}
+  if(lim&&lim.images===false)throw new Error("Reading images isn't available here.");
+  const blobs=[];for(const f of imgs)blobs.push(await shrinkPhoto(f,1568,.85));
+  return parseJsonLoose((await sample(prompt,{images:blobs,modelTier:"default",cache:false})).text);
+}
+const aiErr=e=>{const m=String(e?.message||e);return /401|auth/i.test(m)?"Your API key was rejected. Check it in Settings.":e?.code==="not_granted"?"AI was not allowed.":e?.code==="rate_limited"?"Too many AI requests. Wait a minute and try again.":m.slice(0,140)};
+function mergeFacilities(found){
+  const box=$("#f-facilities"),have=box.value.split(/\s*,\s*/).filter(Boolean),low=new Set(have.map(x=>x.toLowerCase()));
+  const added=found.map(x=>String(x).trim()).filter(x=>x&&!low.has(x.toLowerCase()));
+  box.value=[...have,...added].join(", ");return added.length;
+}
+async function scanBrochure(files){
+  const note=$("#brNote"),btn=$("#brBtn");btn.classList.add("busy");
+  try{
+    const found=(await readBrochure(files,BROCHURE_PROMPT,note)).facilities||[];
+    if(!found.length){note.textContent="No facilities found. Try a clearer photo of the facilities page.";return}
+    const n=mergeFacilities(found);
+    note.textContent=n?`Added ${n} facilit${n>1?"ies":"y"}. Check them before saving.`:"Those facilities are already listed.";
+  }catch(e){note.textContent=aiErr(e)}finally{btn.classList.remove("busy")}
+}
+/* ---------- AI: fill the whole listing from a brochure ---------- */
+function fillPrompt(unit){return `You are reading a Malaysian property brochure or listing material (photos or PDF pages). Extract the property's details for a real estate agent's listing.
+${unit?`The agent wants this unit: "${unit}". Use that unit's details.`:"If several unit types are shown, use the main or first one, and mention the other types briefly in highlights."}
+Reply with JSON only, no other text. Use null for anything the brochure does not clearly show. Never guess.
+{"title": short project or property name,
+ "listingType": "sale" or "rent",
+ "propertyType": one of ${JSON.stringify(TYPES)},
+ "price": number in RM without commas (asking or starting price; monthly if rent),
+ "area": neighbourhood, township or project area,
+ "city": city or town,
+ "state": Malaysian state,
+ "beds": number, "baths": number, "carparks": number,
+ "builtUp": built-up area in square feet (convert square metres x 10.764),
+ "landArea": land or lot size in square feet for landed homes (e.g. 20' x 70' = 1400),
+ "tenure": one of ${JSON.stringify(TENURE)},
+ "titleType": one of ${JSON.stringify(TITLES)},
+ "furnishing": one of ${JSON.stringify(FURN)},
+ "bumiLot": true or false,
+ "floorLevel": e.g. "Double storey" or "High floor",
+ "facing": compass direction,
+ "facilities": [shared facilities, short plain names like "Swimming pool"],
+ "highlights": 1 to 3 short sentences on the selling points shown (location, connectivity, design). No prices.}`}
+function applyListingData(d){
+  const set=[],mark=el=>{const f=el.closest(".f")||el.closest(".check")||el;f.classList.remove("ai-filled");void f.offsetWidth;f.classList.add("ai-filled")};
+  const put=(k,v,label)=>{const el=$("#f-"+k);if(!el||v==null||v==="")return;
+    if(el.tagName==="SELECT"){const o=[...el.options].find(o=>o.value.toLowerCase()===String(v).toLowerCase()||o.textContent.toLowerCase()===String(v).toLowerCase());if(!o)return;el.value=o.value}
+    else if(el.matches("[data-commas]")){const n=numVal(v);if(!n)return;el.value=fmt(n)}
+    else if(el.type==="number"){const n=parseInt(v,10);if(!(n>=0))return;el.value=n}
+    else el.value=String(v).trim();
+    mark(el);set.push(label)};
+  put("title",d.title,"name");
+  put("listingType",d.listingType,"sale/rent");
+  put("propertyType",d.propertyType,"property type");
+  put("price",d.price,"price");
+  put("area",d.area,"area");put("city",d.city,"city");put("state",d.state,"state");
+  put("beds",d.beds,"bedrooms");put("baths",d.baths,"bathrooms");put("carparks",d.carparks,"car parks");
+  put("builtUp",d.builtUp,"built-up");put("landArea",d.landArea,"land");
+  put("tenure",d.tenure,"tenure");put("titleType",d.titleType,"title");put("furnishing",d.furnishing,"furnishing");
+  put("floorLevel",d.floorLevel,"floor");put("facing",d.facing,"facing");
+  if(typeof d.bumiLot==="boolean"){const cb=$("#f-bumiLot");cb.checked=d.bumiLot;mark(cb);set.push("Bumi lot")}
+  if(Array.isArray(d.facilities)&&d.facilities.length){mergeFacilities(d.facilities);mark($("#f-facilities"));set.push("facilities")}
+  if(d.highlights){const h=$("#f-highlights");if(!h.value.trim()){h.value=String(d.highlights).trim();mark(h);set.push("highlights")}}
+  return set;
+}
+async function scanFill(files){
+  const note=$("#scanNote"),btn=$("#scanBtn");btn.classList.add("busy");
+  try{
+    const d=await readBrochure(files,fillPrompt($("#scanUnit").value.trim()),note);
+    const set=applyListingData(d||{});
+    note.textContent=set.length?`Filled ${set.length} details: ${set.join(", ")}. Green boxes came from the brochure. Check them, then Save.`:"Couldn't find listing details in that brochure. Try clearer photos of the pages with the price and specs.";
+  }catch(e){note.textContent=aiErr(e)}finally{btn.classList.remove("busy")}
+}
+document.addEventListener("change",e=>{if(e.target.id==="fScanAll"){const fs=e.target.files;if(fs&&fs.length)scanFill(fs);e.target.value=""}});
+document.addEventListener("change",e=>{if(e.target.id==="fBrochure"){const fs=e.target.files;if(fs&&fs.length)scanBrochure(fs);e.target.value=""}});
+
+/* ---------- location pin ---------- */
+const hasPin=l=>Number.isFinite(+l.lat)&&Number.isFinite(+l.lng)&&+l.lat!==0&&+l.lng!==0;
+const pinStr=l=>`${(+l.lat).toFixed(6)},${(+l.lng).toFixed(6)}`;
+const dirLink=l=>"https://www.google.com/maps/dir/?api=1&destination="+(hasPin(l)?pinStr(l):encodeURIComponent([l.title,l.area,l.city,l.state,"Malaysia"].filter(Boolean).join(", ")));
+function coordsFromText(t){
+  t=String(t||"");
+  const m=t.match(/@(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/)||t.match(/[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+)(?:,|%2C)\s*(-?\d{1,3}\.\d+)/i)||t.match(/^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/)||t.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/);
+  if(!m)return null;const lat=+m[1],lng=+m[2];
+  return Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lng}:null;
+}
+function renderPinBox(){
+  const box=$("#pinBox");if(!box)return;
+  const lat=$("#f-lat").value,lng=$("#f-lng").value,on=hasPin({lat,lng});
+  box.innerHTML=on?`<div class="pin-on"><span aria-hidden="true">📍</span><span><b>Pinned</b><small class="num">${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}</small></span></div>
+     <div class="send-row"><button type="button" class="btn btn-ghost" id="pinOpen">Move pin</button><button type="button" class="btn btn-danger" id="pinClear">Remove pin</button></div>`
+    :`<button type="button" class="btn btn-ghost" id="pinOpen" style="width:100%">📍 Pin on map</button><small class="map-note">Without a pin, Google Maps searches the name and area, which can be off.</small>`;
+}
+const TILES={street:{u:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"},
+  sat:{u:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",lab:"https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"}};
+const TM={lat:3.0449,lng:101.4456,z:14,layer:"street",imgs:new Map(),pts:new Map(),drag:null,pinch:null,lastTap:0};
+const W256=z=>256*2**z;
+const lng2x=(lng,z)=>(lng+180)/360*W256(z);
+const lat2y=(lat,z)=>{const r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*W256(z)};
+const x2lng=(x,z)=>x/W256(z)*360-180;
+const y2lat=(y,z)=>{const n=Math.PI-2*Math.PI*y/W256(z);return 180/Math.PI*Math.atan(.5*(Math.exp(n)-Math.exp(-n)))};
+function openPinMap(){
+  const l={lat:$("#f-lat").value,lng:$("#f-lng").value};
+  const scr=$("#pinmap");TM.imgs=new Map();
+  if(!APP){
+    scr.innerHTML=`<div class="wrap" style="padding-bottom:40px"><div class="screen-bar"><button class="icon-btn" data-pinclose>← Back</button><h2>Pin location</h2></div>
+     <div class="sec"><p class="set-hint">The map works in the phone app. Here, paste a Google Maps link that contains the location, or type the coordinates (for example 3.044900, 101.445600).</p>
+     <label class="f"><span>Google Maps link or coordinates</span><input id="pinText" value="${hasPin(l)?esc(pinStr(l)):""}" autocomplete="off"></label>
+     <small class="map-note" id="pinTextNote" aria-live="polite"></small>
+     <button class="btn btn-primary" id="pinTextSave">Save pin</button></div></div>`;
+    scr.hidden=false;return;
+  }
+  if(hasPin(l)){TM.lat=+l.lat;TM.lng=+l.lng;TM.z=18}
+  scr.innerHTML=`<div class="tm-wrap">
+   <div class="tm-top"><button class="icon-btn" data-pinclose>← Back</button><h2>Pin location</h2><button class="btn btn-primary" id="pinSave" style="height:40px">Save pin</button></div>
+   <form class="tm-search" id="tmSearch"><input id="tmQ" type="search" placeholder="Search a place, project or road" autocomplete="off"><button class="btn btn-ghost" type="submit">Search</button></form>
+   <div class="tm-results" id="tmResults" hidden></div>
+   <div class="tm-map" id="tmMap"><div class="tm-layer" id="tmLayer"></div>
+    <div class="tm-pin" aria-hidden="true"><svg viewBox="0 0 24 34" width="36" height="51"><path d="M12 0C5.4 0 0 5.3 0 11.9 0 20.8 12 34 12 34s12-13.2 12-22.1C24 5.3 18.6 0 12 0z" fill="#d93a2b"/><circle cx="12" cy="12" r="4.6" fill="#fff"/></svg></div>
+    <div class="tm-ctl"><button type="button" class="tm-b" id="tmIn" aria-label="Zoom in">+</button><button type="button" class="tm-b" id="tmOut" aria-label="Zoom out">−</button><button type="button" class="tm-b" id="tmMe" aria-label="Use my location">◎</button></div>
+    <div class="tm-seg"><button type="button" data-tml="street" aria-pressed="${TM.layer==="street"}">Map</button><button type="button" data-tml="sat" aria-pressed="${TM.layer==="sat"}">Satellite</button></div>
+    <div class="tm-attr">Tiles © Esri</div></div>
+   <div class="tm-foot"><span class="num" id="tmCoord"></span><small id="tmNote" aria-live="polite">Drag the map so the pin sits on the property.</small></div></div>`;
+  scr.hidden=false;
+  requestAnimationFrame(tmRender);
+  if(!hasPin(l)){const q=[$("#f-title")?.value,$("#f-area")?.value,$("#f-city")?.value].filter(Boolean).join(", ");if(q){$("#tmQ").value=q;tmSearch(q,true)}}
+}
+function closePinMap(){$("#pinmap").hidden=true;$("#pinmap").innerHTML="";TM.imgs=new Map()}
+function tmRender(){
+  const layer=$("#tmLayer"),map=$("#tmMap");if(!layer||!map)return;
+  const W=map.clientWidth,H=map.clientHeight,z=TM.z,n=2**z,ox=lng2x(TM.lng,z)-W/2,oy=lat2y(TM.lat,z)-H/2,L=TILES[TM.layer],want=new Set();
+  for(let ty=Math.floor(oy/256);ty<=Math.floor((oy+H)/256);ty++){if(ty<0||ty>=n)continue;
+    for(let tx=Math.floor(ox/256);tx<=Math.floor((ox+W)/256);tx++){const wx=((tx%n)+n)%n;
+      for(const[k,u]of[["b",L.u],...(L.lab?[["l",L.lab]]:[])]){
+        const key=`${TM.layer}/${k}/${z}/${tx}/${ty}`;want.add(key);let im=TM.imgs.get(key);
+        if(!im){im=document.createElement("img");im.alt="";im.onerror=()=>{im.style.visibility="hidden"};im.draggable=false;im.className=k==="l"?"lab":"";im.src=u.replace("{z}",z).replace("{y}",ty).replace("{x}",wx);layer.appendChild(im);TM.imgs.set(key,im)}
+        im.style.transform=`translate(${Math.round(tx*256-ox)}px,${Math.round(ty*256-oy)}px)`;
+      }}}
+  for(const[k,im]of TM.imgs)if(!want.has(k)){im.remove();TM.imgs.delete(k)}
+  const c=$("#tmCoord");if(c)c.textContent=`${TM.lat.toFixed(6)}, ${TM.lng.toFixed(6)}`;
+}
+function tmZoom(dz){const z=Math.min(19,Math.max(3,TM.z+dz));if(z!==TM.z){TM.z=z;tmRender()}}
+function tmPanBy(dx,dy){const z=TM.z;TM.lng=x2lng(lng2x(TM.lng,z)-dx,z);TM.lat=Math.max(-85,Math.min(85,y2lat(lat2y(TM.lat,z)-dy,z)));tmRender()}
+document.addEventListener("pointerdown",e=>{
+  if(!e.target.closest("#tmMap")||e.target.closest("button"))return;
+  e.target.closest("#tmMap").setPointerCapture?.(e.pointerId);
+  TM.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(TM.pts.size===1)TM.drag={x:e.clientX,y:e.clientY,moved:false};
+  if(TM.pts.size===2){const p=[...TM.pts.values()];TM.pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),s:1};TM.drag=null}
+});
+document.addEventListener("pointermove",e=>{
+  if(!TM.pts.has(e.pointerId))return;TM.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(TM.pinch&&TM.pts.size===2){const p=[...TM.pts.values()];TM.pinch.s=Math.max(.25,Math.min(4,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)/TM.pinch.d));$("#tmLayer").style.transform=`scale(${TM.pinch.s})`;return}
+  if(TM.drag){const dx=e.clientX-TM.drag.x,dy=e.clientY-TM.drag.y;if(Math.abs(dx)+Math.abs(dy)>3)TM.drag.moved=true;TM.drag.x=e.clientX;TM.drag.y=e.clientY;tmPanBy(dx,dy)}
+});
+function tmEnd(e){
+  if(!TM.pts.has(e.pointerId))return;TM.pts.delete(e.pointerId);
+  if(TM.pinch&&TM.pts.size<2){const s=TM.pinch.s;TM.pinch=null;$("#tmLayer").style.transform="";tmZoom(Math.round(Math.log2(s)));TM.drag=null;return}
+  if(TM.drag&&TM.pts.size===0){if(!TM.drag.moved){const now=Date.now();if(now-TM.lastTap<300){TM.lastTap=0;tmZoom(1)}else TM.lastTap=now}TM.drag=null}
+}
+document.addEventListener("pointerup",tmEnd);document.addEventListener("pointercancel",tmEnd);
+document.addEventListener("wheel",e=>{if(!e.target.closest("#tmMap"))return;e.preventDefault();tmZoom(e.deltaY<0?1:-1)},{passive:false});
+async function tmSearch(q,auto){
+  const box=$("#tmResults"),note=$("#tmNote");if(!q.trim())return;
+  if(!auto)note.textContent="Searching…";
+  try{
+    const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=my&q="+encodeURIComponent(q),{headers:{"Accept-Language":"en"}});
+    const js=await r.json();
+    if(!js.length){if(!auto)note.textContent="No match. Try a shorter name, or drag the map yourself.";box.hidden=true;return}
+    if(auto){TM.lat=+js[0].lat;TM.lng=+js[0].lon;TM.z=16;tmRender();note.textContent="Drag the map so the pin sits exactly on the property.";return}
+    box.innerHTML=js.map((x,i)=>`<button type="button" data-tmr="${i}">${esc(x.display_name)}</button>`).join("");box.hidden=false;TM.results=js;note.textContent="";
+  }catch(e){if(!auto)note.textContent="Search isn't available right now. Drag the map instead.";}
+}
+const locWaiters={};
+window.__locCb=(id,ok,lat,lng,msg)=>{const w=locWaiters[id];if(!w)return;delete locWaiters[id];ok?w.res({lat,lng}):w.rej(new Error(msg))};
+async function tmMyLocation(){
+  const note=$("#tmNote");note.textContent="Finding your location…";
+  try{
+    const p=await new Promise((res,rej)=>{const id="g"+Date.now();locWaiters[id]={res,rej};AndroidBridge.getLocation(id)});
+    TM.lat=p.lat;TM.lng=p.lng;TM.z=18;tmRender();note.textContent="Centred on where you are now. Adjust if needed.";
+  }catch(e){note.textContent={denied:"Location permission was denied. Allow it in Android Settings › Apps › Pocket Listings.",off:"Turn on Location in your phone settings and try again.",timeout:"Couldn't get a fix. Step outside or try again."}[e.message]||"Couldn't get your location."}
+}
+function setPin(lat,lng){$("#f-lat").value=lat?(+lat).toFixed(6):"";$("#f-lng").value=lng?(+lng).toFixed(6):"";renderPinBox()}
+document.addEventListener("submit",e=>{if(e.target.id==="tmSearch"){e.preventDefault();tmSearch($("#tmQ").value,false)}});
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.hasAttribute("data-pinclose")){closePinMap();return}
+  if(t.dataset.tml){TM.layer=t.dataset.tml;document.querySelectorAll("[data-tml]").forEach(b=>b.setAttribute("aria-pressed",String(b===t)));$("#tmLayer").innerHTML="";TM.imgs=new Map();tmRender();return}
+  if(t.dataset.tmr!==undefined){const r=TM.results[+t.dataset.tmr];TM.lat=+r.lat;TM.lng=+r.lon;TM.z=17;$("#tmResults").hidden=true;tmRender();$("#tmNote").textContent="Drag the map so the pin sits exactly on the property.";return}
+  switch(t.id){
+    case "pinOpen":openPinMap();break;
+    case "pinClear":setPin("","");break;
+    case "pinSave":setPin(TM.lat,TM.lng);closePinMap();toast("Location pinned");break;
+    case "pinTextSave":{const c=coordsFromText($("#pinText").value);if(!c){$("#pinTextNote").textContent="No coordinates found. In Google Maps, long-press the spot and copy the numbers shown (e.g. 3.0449, 101.4456).";break}setPin(c.lat,c.lng);closePinMap();toast("Location pinned");break}
+    case "tmIn":tmZoom(1);break;case "tmOut":tmZoom(-1);break;case "tmMe":tmMyLocation();break;
+  }
+});
+window.addEventListener("resize",()=>{if(!$("#pinmap").hidden)tmRender()});
+
+document.addEventListener("click",e=>{
+  const sb=e.target.closest("[data-xsort]");if(sb){document.querySelectorAll("[data-xsort]").forEach(b=>b.setAttribute("aria-pressed",String(b===sb)));return}
+  if(e.target.closest("[data-clearsort]")){S.sort="new";render()}
+});
+
+// Android back button: close the top-most layer first
+window.__back=()=>{if(!$("#pinmap").hidden){closePinMap();return true}if(!$("#post").hidden&&!$("#drawerHost").innerHTML&&$("#viewer").hidden){$("[data-pclose]").click();return true}if(!$("#viewer").hidden){closeViewer();return true}if($("#drawerHost").innerHTML){closeDrawer();return true}if(!$("#video").hidden){$("[data-vclose]").click();return true}if(!$("#settings").hidden){$("#settings").hidden=true;render();return true}if(!$("#edit").hidden){cancelEdit();return true}if(!$("#detail").hidden){$("#detail").hidden=true;S.curId=null;return true}return false};
+/* ---------- leads: enquiries, stages and follow-up dates ---------- */
+const LD_STAGES=["New","Contacted","Viewing","Hot","Negotiating","Closed","Lost"];
+const LD_SOURCES=["TikTok","Threads","WhatsApp","Facebook","Instagram","Referral","iProperty / PropertyGuru","Mudah","Walk-in / call","Other"];
+const LD_PURPOSE=["Buy – own stay","Buy – investment","Rent","Sell / list with me","Not sure yet"];
+const LD_LOAN=["Not checked","Loan pre-approved","Loan in process","Cash buyer","Not eligible yet"];
+const LD_AREAS=["Bandar Mahkota Banting","Gamuda Cove"];
+const LD_CADENCE=[1,3,7,14,30]; // days until the next follow-up, after each contact
+const LDKEY="pocket-leads-v1";
+const LD={leads:[],ready:false,col:null,filter:"all",confirm:null};
+const ldNewId=()=>"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const ymd=d=>{const z=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())};
+const ldToday=()=>ymd(new Date());
+const ldIn=n=>{const d=new Date();d.setDate(d.getDate()+n);return ymd(d)};
+const ldDate=s=>{if(!s)return"";const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("en-MY",{day:"numeric",month:"short"})};
+const ldActive=l=>l.status!=="Closed"&&l.status!=="Lost";
+const ldDue=l=>ldActive(l)&&!!l.next&&l.next<=ldToday();
+const ldPhone=p=>{let n=String(p||"").replace(/\D/g,"");if(n.startsWith("0"))n="6"+n;return n};
+function ldLocalLoad(){try{LD.leads=JSON.parse(localStorage.getItem(LDKEY)||"[]")}catch(e){LD.leads=[]}}
+function ldLocalSave(){if(window.__STANDALONE){kvSet(LDKEY,LD.leads).catch(()=>{});return}try{localStorage.setItem(LDKEY,JSON.stringify(LD.leads))}catch(e){}}
+function ldInit(){
+  if(S.remote&&S.col){
+    LD.col=S.col.doc("_crm").collection("leads");
+    LD.col.onSnapshot(snap=>{LD.leads=snap.docs.map(d=>({...d.data(),id:d.id}));LD.ready=true;ldRefresh()},
+      ()=>{LD.col=null;ldLocalLoad();LD.ready=true;ldRefresh()});
+  }else if(window.__STANDALONE){kvGet(LDKEY).then(v=>{LD.leads=v||[]},()=>{LD.leads=[]}).finally(()=>{LD.ready=true;ldRefresh()})}
+  else{ldLocalLoad();LD.ready=true;ldRefresh()}
+}
+async function ldSave(l){
+  l.updatedAt=new Date().toISOString();if(!l.createdAt)l.createdAt=l.updatedAt;
+  const{id,...data}=l;
+  if(LD.col)await LD.col.doc(id).set(data);
+  else{const i=LD.leads.findIndex(x=>x.id===id);if(i>=0)LD.leads[i]=l;else LD.leads.push(l);ldLocalSave();ldRefresh()}
+}
+async function ldDelete(id){
+  if(LD.col)await LD.col.doc(id).delete();
+  else{LD.leads=LD.leads.filter(x=>x.id!==id);ldLocalSave();ldRefresh()}
+}
+function ldInterest(l){const li=l.listingId&&S.listings.find(x=>x.id===l.listingId);return li?li.title:(l.interest||"")}
+function renderLeadBar(){
+  const due=$("#leadsDue"),sub=$("#leadsSub");if(!due)return;
+  const all=LD.leads,n=all.filter(ldDue).length,act=all.filter(ldActive).length;
+  due.innerHTML=n?`<span class="due-pill">${n} due</span>`:"";
+  sub.textContent=!LD.ready?"Loading…":!all.length?"Add every enquiry here the moment it comes in":`${act} active · ${all.filter(l=>l.status==="Hot"||l.status==="Negotiating").length} hot`;
+}
+function ldRefresh(){renderLeadBar();if(!$("#leads").hidden&&!ST().clientMode)renderLeads()}
+function ldCard(l){
+  const t=ldToday();let when;
+  if(!ldActive(l))when=`<span class="ld-when">${l.status==="Closed"?"Deal closed":"Marked lost"}</span>`;
+  else if(!l.next)when=`<span class="ld-when">No follow-up date set</span>`;
+  else if(l.next<t)when=`<span class="ld-when d">Overdue since ${ldDate(l.next)}</span>`;
+  else if(l.next===t)when=`<span class="ld-when t">Follow up today</span>`;
+  else when=`<span class="ld-when">Next follow-up ${ldDate(l.next)}</span>`;
+  const ph=ldPhone(l.phone),li=l.listingId&&S.listings.find(x=>x.id===l.listingId),touches=l.touches||0;
+  let send="";
+  if(ph&&li){const st=ST().msgStyle,bm=st==="bm",first=String(l.name||"").trim();
+    let msg=(bm?`Salam ${first},\n\n`:`Hi ${first},\n\n`)+waTemplate(li,st);if(!ST().emoji)msg=stripEmoji(msg);
+    send=`<a class="btn btn-wa" href="https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Send listing</a>`}
+  const del=LD.confirm===l.id
+    ?`<span class="ld-meta" style="align-self:center">Delete this lead?</span><button class="btn btn-danger" data-la="delyes" data-lid="${esc(l.id)}">Yes, delete</button><button class="btn btn-ghost" data-la="delno">Keep</button>`
+    :`<button class="btn btn-ghost" data-la="edit" data-lid="${esc(l.id)}">Edit</button><button class="btn btn-danger" data-la="del" data-lid="${esc(l.id)}">Delete</button>`;
+  return `<article class="ld-card${ldDue(l)?" isdue":""}">
+   <div class="ld-top"><div><div class="ld-name">${esc(l.name)}</div><div class="ld-meta">${esc([ldInterest(l),l.budget].filter(Boolean).join(" · ")||"Interest not set")}</div></div><span class="pill st-${esc(l.status)}">${esc(l.status)}</span></div>
+   <div class="ld-tags"><span class="ld-tag">${esc(l.source)}</span><span class="ld-tag">${esc(l.purpose)}</span><span class="ld-tag">${esc(l.loan)}</span><span class="ld-tag">${touches} follow-up${touches===1?"":"s"}</span></div>
+   ${l.phone?`<div class="ld-meta">📞 <span class="num" style="user-select:all">${esc(l.phone)}</span></div>`:""}
+   ${lqSummary(l)?`<div class="ld-sum">📋 ${esc(lqSummary(l))}</div>`:""}
+   ${l.notes?`<p class="ld-notes">${esc(l.notes)}</p>`:""}
+   <div>${when}</div>
+   <div class="ld-acts">${ldActive(l)?`<button class="btn btn-primary" data-la="touch" data-lid="${esc(l.id)}">✓ Followed up</button>`:""}<button class="btn btn-ghost" data-la="q" data-lid="${esc(l.id)}">📋 Questions ${lqDone(l)}/${lqList(l.q||{}).length}</button>${ph?`<a class="btn btn-ghost" href="https://api.whatsapp.com/send?phone=${ph}" target="_blank" rel="noopener">WhatsApp</a>`:""}${send}${l.phone?`<button class="btn btn-ghost" data-la="copy" data-lid="${esc(l.id)}">Copy no.</button>`:""}
+    <select data-la="stage" data-lid="${esc(l.id)}" aria-label="Change stage">${LD_STAGES.map(s=>`<option${s===l.status?" selected":""}>${s}</option>`).join("")}</select></div>
+   <div class="ld-acts">${del}</div>
+  </article>`;
+}
+function renderLeads(){
+  const scr=$("#leads"),y=scr.scrollTop,all=LD.leads,f=LD.filter;
+  let rows=f==="all"?all.slice():f==="due"?all.filter(ldDue):f==="open"?all.filter(ldActive):all.filter(l=>l.status===f);
+  rows.sort((a,b)=>(ldDue(b)-ldDue(a))||(ldActive(b)-ldActive(a))||((a.next||"9999")<(b.next||"9999")?-1:(a.next||"9999")>(b.next||"9999")?1:0));
+  const cnt=k=>k==="all"?all.length:k==="due"?all.filter(ldDue).length:k==="open"?all.filter(ldActive).length:all.filter(l=>l.status===k).length;
+  const chips=[["due","Due today"],["open","Active"],["all","All"],...LD_STAGES.map(s=>[s,s])].map(([k,t])=>`<button class="chip" data-la="filter" data-f="${k}" aria-pressed="${f===k}">${t} · ${cnt(k)}</button>`).join("");
+  let list;
+  if(!LD.ready)list=`<div class="empty"><p>Loading leads…</p></div>`;
+  else if(!all.length)list=`<div class="empty"><h2>No leads yet</h2><p>When someone comments, DMs or WhatsApps about a listing, tap <b>+ Add lead</b> before you reply, so nobody slips through.</p><button class="btn btn-primary" data-la="add">+ Add lead</button></div>`;
+  else if(!rows.length)list=`<div class="empty"><h2>Nothing here</h2><p>No leads in this group right now.</p></div>`;
+  else list=rows.map(ldCard).join("");
+  scr.innerHTML=`<div class="wrap" style="padding-bottom:40px">
+   <div class="screen-bar"><button class="icon-btn" data-la="close">← Back</button><h2>Leads</h2><button class="btn btn-primary" style="height:40px" data-la="add">+ Add lead</button></div>
+   <div class="tally ld-tally"><div class="due"><span class="lbl">Follow up today</span><b class="num">${all.filter(ldDue).length}</b></div><div class="hot"><span class="lbl">Hot</span><b class="num">${all.filter(l=>l.status==="Hot"||l.status==="Negotiating").length}</b></div><div><span class="lbl">Active</span><b class="num">${all.filter(ldActive).length}</b></div></div>
+   <p class="set-hint ld-tip">Tap <b>✓ Followed up</b> after each call or message. The next date sets itself: 1 day, 3 days, 1 week, 2 weeks, then monthly.</p>
+   <div class="chips" style="margin-bottom:12px">${chips}</div>
+   <div class="list">${list}</div>
+   <p class="note">${LD.col?"Saved to your Claude account. Only you can see these leads.":APP?"Saved on this phone. Leads are included in Export backup.":"Saved on this device only."}</p>
+  </div>`;
+  scr.scrollTop=y;
+}
+function openLeads(){if(ST().clientMode)return;LD.confirm=null;$("#leads").hidden=false;renderLeads();$("#leads").scrollTop=0}
+function closeLeads(){$("#leads").hidden=true;$("#leads").innerHTML="";LD.confirm=null}
+function openLeadForm(id){
+  const l=id?{...LD.leads.find(x=>x.id===id)}:{id:ldNewId(),status:"New",source:"TikTok",purpose:LD_PURPOSE[0],loan:LD_LOAN[0],next:ldToday(),touches:0};
+  const opt=(arr,cur)=>arr.map(o=>`<option${o===cur?" selected":""}>${esc(o)}</option>`).join("");
+  const open=S.listings.filter(x=>["active","under_offer"].includes(x.status)||x.id===l.listingId);
+  const curI=l.listingId?"L:"+l.listingId:l.interest?"A:"+l.interest:"";
+  const areas=[...new Set([...LD_AREAS,...(l.interest&&!l.listingId?[l.interest]:[])])];
+  $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="${id?"Edit lead":"New lead"}"><div class="drawer-in"><div class="grab"></div>
+   <h2 style="font-size:19px">${id?"Edit lead":"New lead"}</h2>
+   <form id="ldf" data-id="${esc(l.id)}" style="padding:0;gap:10px">
+    <label class="f"><span>Name</span><input id="ld-name" name="name" value="${esc(l.name)}" required placeholder="e.g. Encik Hafiz" autocomplete="off"></label>
+    <div class="row"><label class="f"><span>Phone</span><input id="ld-phone" name="phone" value="${esc(l.phone)}" inputmode="tel" placeholder="012-345 6789" autocomplete="off"></label>
+     <label class="f"><span>Came from</span><select id="ld-source" name="source">${opt(LD_SOURCES,l.source)}</select></label></div>
+    <label class="f"><span>Interested in</span><select id="ld-interest" name="interestSel">
+     <option value=""${curI?"":" selected"}>Not sure yet</option>
+     ${open.length?`<optgroup label="Your listings">${open.map(x=>`<option value="L:${esc(x.id)}"${curI==="L:"+x.id?" selected":""}>${esc(x.title)}${x.ref?" · "+esc(x.ref):""}</option>`).join("")}</optgroup>`:""}
+     <optgroup label="Areas">${areas.map(a=>`<option value="A:${esc(a)}"${curI==="A:"+a?" selected":""}>${esc(a)}</option>`).join("")}<option value="A:Other area"${curI==="A:Other area"?" selected":""}>Other area</option></optgroup>
+    </select></label>
+    <div class="row"><label class="f"><span>Budget</span><input id="ld-budget" name="budget" value="${esc(l.budget)}" placeholder="e.g. RM 450k" autocomplete="off"></label>
+     <label class="f"><span>Looking to</span><select id="ld-purpose" name="purpose">${opt(LD_PURPOSE,l.purpose)}</select></label></div>
+    <div class="row"><label class="f"><span>Financing</span><select id="ld-loan" name="loan">${opt(LD_LOAN,l.loan)}</select></label>
+     <label class="f"><span>Stage</span><select id="ld-status" name="status">${opt(LD_STAGES,l.status)}</select></label></div>
+    <label class="f"><span>Next follow-up</span><input id="ld-next" name="next" type="date" value="${esc(l.next)}"></label>
+    <label class="f"><span>Notes</span><textarea id="ld-notes" name="notes" placeholder="What they asked, when they can view, family size, timeline…">${esc(l.notes)}</textarea></label>
+    <div class="send-row"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="ldSaveBtn">${id?"Save changes":"Save lead"}</button></div>
+    ${id?"":`<button type="submit" class="btn btn-ghost" data-next="q" style="width:100%">Save &amp; ask call questions</button>`}
+   </form></div></div>`;
+  if(!id)setTimeout(()=>$("#ld-name")?.focus(),60);
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="ldf")return;e.preventDefault();
+  const f=e.target,fd=new FormData(f),id=f.dataset.id,old=LD.leads.find(x=>x.id===id)||{touches:0};
+  const l={...old,id};
+  ["name","phone","source","budget","purpose","loan","status","next","notes"].forEach(k=>l[k]=String(fd.get(k)??"").trim());
+  const sel=String(fd.get("interestSel")||"");
+  if(sel.startsWith("L:")){l.listingId=sel.slice(2);l.interest=""}else{l.listingId="";l.interest=sel.startsWith("A:")?sel.slice(2):""}
+  if(!l.name)return;
+  const b=$("#ldSaveBtn");if(b)b.disabled=true;
+  const toQ=e.submitter?.dataset?.next==="q";
+  try{await ldSave(l);closeDrawer();toast(old.id?"Lead updated":"Lead added");if(toQ)openLeadQ(l.id,l)}catch(err){toast("Couldn't save the lead. Check your connection and try again.");if(b)b.disabled=false}
+});
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-la]");
+  if(!t){if(e.target.closest("#leadsBtn"))openLeads();return}
+  if(t.tagName==="SELECT")return;
+  const a=t.dataset.la,l=LD.leads.find(x=>x.id===t.dataset.lid);
+  try{
+    if(a==="close")closeLeads();
+    else if(a==="add")openLeadForm(null);
+    else if(a==="edit"&&l)openLeadForm(l.id);
+    else if(a==="q"&&l)openLeadQ(l.id);
+    else if(a==="filter"){LD.filter=t.dataset.f;renderLeads()}
+    else if(a==="touch"&&l){const n=(l.touches||0)+1,gap=LD_CADENCE[Math.min(n-1,LD_CADENCE.length-1)];
+      await ldSave({...l,touches:n,next:ldIn(gap),lastTouch:ldToday(),status:l.status==="New"?"Contacted":l.status});toast("Next follow-up "+ldDate(ldIn(gap)))}
+    else if(a==="copy"&&l){try{await copyText(l.phone);toast("Number copied")}catch(err){toast("Press and hold the number to copy it")}}
+    else if(a==="del"){LD.confirm=t.dataset.lid;renderLeads()}
+    else if(a==="delno"){LD.confirm=null;renderLeads()}
+    else if(a==="delyes"){await ldDelete(t.dataset.lid);LD.confirm=null;toast("Lead deleted");if(LD.col)renderLeads()}
+  }catch(err){toast("Couldn't save. Check your connection and try again.")}
+});
+document.addEventListener("change",async e=>{
+  const s=e.target;if(s.dataset?.la!=="stage")return;
+  const l=LD.leads.find(x=>x.id===s.dataset.lid);if(!l)return;
+  try{await ldSave({...l,status:s.value});toast("Moved to "+s.value)}catch(err){toast("Couldn't save. Try again.")}
+});
+/* ---------- call questions: qualify a buyer on the phone ---------- */
+const LQ=[
+ {k:"purpose",t:"Own stay or investment?",h:"Nak duduk sendiri atau untuk pelaburan?",o:["Own stay","Investment","Both"]},
+ {k:"firstHome",t:"First home?",h:"Ni rumah pertama ke? Ada rumah atas nama sendiri sekarang?",o:["First home","Own 1 now","Own 2 or more"]},
+ {k:"living",t:"Living now",h:"Sekarang duduk mana? Menyewa atau dengan keluarga?",o:["Renting","With family","Own house"]},
+ {k:"age",t:"Age",h:"Boleh saya tahu umur? Ini untuk kira tempoh loan.",num:1,u:"years"},
+ {k:"joint",t:"Single or joint name?",h:"Nak beli nama sendiri atau joint dengan pasangan / keluarga?",o:["Single name","Joint with spouse","Joint with family"]},
+ {k:"job",t:"Job type",h:"Kerja kerajaan, swasta atau sendiri?",o:["Government","Private","Self-employed","Business owner"]},
+ {k:"jobYears",t:"Years in current job",h:"Dah berapa lama kerja di tempat sekarang?",num:1,u:"years"},
+ {k:"gross",t:"Gross salary",h:"Gaji kasar sebulan berapa?",num:1,u:"RM",rm:1},
+ {k:"net",t:"Net salary after deductions",h:"Gaji bersih yang masuk akaun lepas potongan berapa?",num:1,u:"RM",rm:1},
+ {k:"jointNet",t:"Joint applicant's net salary",h:"Gaji bersih pasangan / joint berapa?",num:1,u:"RM",rm:1,when:q=>q.joint&&q.joint!=="Single name"},
+ {k:"commit",t:"Monthly commitments",h:"Komitmen bulanan sekarang? Kereta, PTPTN, personal loan, kad kredit.",num:1,u:"RM",rm:1},
+ {k:"credit",t:"Loan or credit issues?",h:"Pernah loan ditolak, atau ada isu CCRIS / CTOS?",o:["None","Not sure","Yes, some issues"]},
+ {k:"down",t:"Down payment",h:"Duit 10% deposit dah ready, atau nak full loan?",o:["10% ready","Need full loan","LPPSA","Cash buyer"]},
+ {k:"monthly",t:"Comfortable monthly installment",h:"Bayaran bulanan yang selesa untuk you berapa?",num:1,u:"RM",rm:1},
+ {k:"want",t:"Type and rooms wanted",h:"Nak landed atau high-rise? Berapa bilik?",ph:"e.g. Double storey, 4 rooms"},
+ {k:"family",t:"Household",h:"Berapa orang akan duduk? Ada anak bersekolah?",ph:"e.g. 2 adults, 2 kids"},
+ {k:"areaWhy",t:"Why this area?",h:"Kenapa pilih kawasan ni? Dekat tempat kerja atau keluarga?",ph:"e.g. Works in Klang, parents in Banting"},
+ {k:"timeline",t:"When do they want to buy?",h:"Plan nak beli bila?",o:["Now","1–3 months","3–6 months","Just looking"]},
+ {k:"decider",t:"Who else decides?",h:"Ada sesiapa lagi perlu tengok sebelum buat keputusan?",ph:"e.g. Wife, parents"},
+ {k:"others",t:"Seen other projects or agents?",h:"Dah tengok projek lain, atau ada agent lain bantu?",ph:"e.g. Visited Eco Sanctuary"},
+ {k:"viewDay",t:"Viewing: weekend or weekday?",h:"Nak viewing hujung minggu atau hari bekerja?",o:["Weekend","Weekday","Either"]},
+ {k:"viewTime",t:"Viewing time",h:"Pagi, petang atau malam lebih senang?",o:["Morning","Afternoon","Evening"]}
+];
+const lqList=q=>LQ.filter(x=>!x.when||x.when(q));
+const lqDone=l=>{const q=l.q||{};return lqList(q).filter(x=>q[x.k]!==undefined&&q[x.k]!==""&&q[x.k]!==0).length};
+function lqSummary(l){const q=l.q||{};return [q.purpose,q.joint,q.net?"Net RM "+fmt(q.net):"",q.timeline,q.viewDay&&("View "+q.viewDay.toLowerCase())].filter(Boolean).join(" · ")}
+const QD={id:null,q:{},lead:null};
+function lqEstimate(q){
+  const inc=(+q.net||0)+(q.joint&&q.joint!=="Single name"?(+q.jointNet||0):0);
+  if(!inc)return `<div class="q-est"><b>Rough loan estimate</b><small>Fill in net salary to see a rough estimate.</small></div>`;
+  const inst=Math.max(0,Math.round(inc*0.6-(+q.commit||0)));
+  const years=q.age?Math.max(5,Math.min(35,70-(+q.age))):35;
+  const r=0.04/12,n=years*12,loan=inst>0?Math.round(inst*(1-Math.pow(1+r,-n))/r/1000)*1000:0;
+  const comfy=+q.monthly||0;
+  return `<div class="q-est"><b>Rough loan estimate</b>
+   <span>Max installment about <b class="num">RM ${fmt(inst)}</b>/month · loan up to about <b class="num">RM ${fmt(loan)}</b> over ${years} years</span>
+   ${comfy&&comfy<inst?`<span>At their comfortable RM ${fmt(comfy)}/month: about <b class="num">RM ${fmt(Math.round(comfy*(1-Math.pow(1+r,-n))/r/1000)*1000)}</b></span>`:""}
+   <small>Guide only: 60% of net income minus commitments, 4% interest, loan ends by age 70. The bank decides the real amount.</small></div>`;
+}
+function openLeadQ(id,fallback){
+  const l=LD.leads.find(x=>x.id===id)||fallback;if(!l)return;
+  QD.id=id;QD.lead=l;QD.q={...(l.q||{})};drawLeadQ(true);
+}
+function drawLeadQ(first){
+  const q=QD.q,list=lqList(q),done=list.filter(x=>q[x.k]!==undefined&&q[x.k]!==""&&q[x.k]!==0).length;
+  const body=list.map(x=>{
+    let ctl;
+    if(x.o)ctl=`<div class="q-chips">${x.o.map(v=>`<button type="button" class="q-chip" data-qk="${x.k}" data-qv="${esc(v)}" aria-pressed="${q[x.k]===v}">${esc(v)}</button>`).join("")}</div>`;
+    else if(x.num)ctl=`<div class="q-unit">${x.u==="RM"?"<span>RM</span>":""}<input class="q-in" id="q-${x.k}" data-qin="${x.k}" inputmode="numeric" ${x.rm?"data-commas":""} value="${q[x.k]?(x.rm?fmt(q[x.k]):q[x.k]):""}" autocomplete="off">${x.u!=="RM"?`<span>${x.u}</span>`:""}</div>`;
+    else ctl=`<input class="q-in" id="q-${x.k}" data-qin="${x.k}" value="${esc(q[x.k]||"")}" placeholder="${esc(x.ph||"")}" autocomplete="off">`;
+    return `<div class="q-item"><b>${esc(x.t)}</b><p class="q-hint" data-raw>“${esc(x.h)}”</p>${ctl}${x.k==="monthly"?`<div id="qEst">${lqEstimate(q)}</div>`:""}</div>`;
+  }).join("");
+  if(first){
+    $("#drawerHost").innerHTML=`<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="Call questions"><div class="drawer-in"><div class="grab"></div>
+     <h2 style="font-size:19px">Call questions · ${esc(QD.lead.name)}</h2>
+     <div class="q-prog"><small class="set-hint" id="qCount">${done} of ${list.length} answered</small><div class="q-bar"><i id="qBar" style="width:${Math.round(done/list.length*100)}%"></i></div></div>
+     <p class="set-hint" style="margin:0">Read the line in quotes, tap the answer. Skip anything they don't want to share.</p>
+     <div id="qBody">${body}</div>
+     <div class="send-row q-save"><button type="button" class="btn btn-ghost" data-close>Close</button><button type="button" class="btn btn-primary" id="qSaveBtn">Save answers</button></div>
+    </div></div>`;
+  }else{
+    const y=document.querySelector(".drawer")?.scrollTop;$("#qBody").innerHTML=body;if(y!=null)document.querySelector(".drawer").scrollTop=y;
+    $("#qCount").textContent=`${done} of ${list.length} answered`;$("#qBar").style.width=Math.round(done/list.length*100)+"%";
+  }
+}
+function lqProgress(){const list=lqList(QD.q),done=list.filter(x=>QD.q[x.k]!==undefined&&QD.q[x.k]!==""&&QD.q[x.k]!==0).length;const c=$("#qCount");if(c){c.textContent=`${done} of ${list.length} answered`;$("#qBar").style.width=Math.round(done/list.length*100)+"%"}const e=$("#qEst");if(e)e.innerHTML=lqEstimate(QD.q)}
+document.addEventListener("click",async e=>{
+  const c=e.target.closest("[data-qk]");
+  if(c){const k=c.dataset.qk,v=c.dataset.qv;if(QD.q[k]===v)delete QD.q[k];else QD.q[k]=v;
+    if(k==="joint")drawLeadQ(false);else{c.parentElement.querySelectorAll(".q-chip").forEach(b=>b.setAttribute("aria-pressed",String(QD.q[k]===b.dataset.qv)));lqProgress()}return}
+  if(e.target.closest("#qSaveBtn")){
+    const l=LD.leads.find(x=>x.id===QD.id)||QD.lead;if(!l)return;
+    const q={...QD.q};const upd={...l,q};
+    if(q.purpose==="Own stay")upd.purpose="Buy – own stay";else if(q.purpose==="Investment")upd.purpose="Buy – investment";
+    if(q.down==="Cash buyer")upd.loan="Cash buyer";
+    const b=$("#qSaveBtn");b.disabled=true;
+    try{await ldSave(upd);closeDrawer();toast("Answers saved")}catch(err){b.disabled=false;toast("Couldn't save the answers. Try again.")}
+  }
+});
+document.addEventListener("input",e=>{
+  const k=e.target.dataset?.qin;if(!k)return;const x=LQ.find(y=>y.k===k);
+  const v=x&&x.num?numVal(e.target.value):e.target.value.trim();
+  if(v===""||v===0)delete QD.q[k];else QD.q[k]=v;lqProgress();
+});
+
+// keep the lead bar in step with the listings screen, and close leads when client mode turns on
+{const _r=render;render=function(){_r();renderLeadBar();if(ST().clientMode&&!$("#leads").hidden)closeLeads()}}
+{const _i=initStore;initStore=async function(){await _i();ldInit()}}
+{const _b=window.__back;window.__back=()=>{if(!$("#leads").hidden&&!$("#drawerHost").innerHTML){closeLeads();return true}return _b()}}
+Object.assign(BM,{"Leads":"Prospek","Every enquiry and when to follow up":"Setiap pertanyaan dan bila perlu susulan","+ Add lead":"+ Tambah prospek","New lead":"Prospek baru","Edit lead":"Sunting prospek","Follow up today":"Susulan hari ini","Hot":"Panas","Due today":"Perlu hari ini","No leads yet":"Belum ada prospek","✓ Followed up":"✓ Sudah susulan","Send listing":"Hantar hartanah","Copy no.":"Salin no.","Came from":"Sumber","Interested in":"Berminat dengan","Budget":"Bajet","Looking to":"Tujuan","Financing":"Pembiayaan","Stage":"Peringkat","Next follow-up":"Susulan seterusnya","Save lead":"Simpan prospek","Save changes":"Simpan perubahan","Name":"Nama","Lead added":"Prospek ditambah","Lead updated":"Prospek dikemas kini","Lead deleted":"Prospek dipadam","Keep":"Simpan","Yes, delete":"Ya, padam"});
+
+async function webShareFile(blob,name,text){
+  const file=new File([blob],name,{type:blob.type||"application/octet-stream"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:text||""});return}}
+  catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);toast("Saved to Downloads.");
+}
+render();initStore();
+</script>
+
+</body></html>
