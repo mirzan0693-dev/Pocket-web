@@ -84,6 +84,7 @@ button:disabled{opacity:.55;cursor:default}
 .sug .sbtns .copyq{color:var(--accent)}
 .sug .sprice{font:500 12px var(--mono);color:var(--ink);margin-left:6px}
 .sug.used{opacity:.55}
+.sug .tag{display:inline-block;font:500 10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 6px;margin:0 6px;vertical-align:2px}
 .shuffle{font:600 13px var(--body);padding:6px 12px;border-radius:99px;color:var(--accent)}
 .plat{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
 .plat button{border:0;border-radius:9px;padding:9px 10px;background:transparent;color:var(--muted)}
@@ -124,6 +125,13 @@ button:disabled{opacity:.55;cursor:default}
 #ctTopic button,.fonts button{border:0;border-radius:9px;padding:9px 6px;background:transparent;color:var(--muted)}
 body.has-bg{background-size:cover;background-position:center;background-attachment:fixed}
 .wrap{zoom:var(--zoom,1)}
+.tour{position:fixed;inset:0;z-index:50}
+.tour-spot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.62);transition:all .25s ease;pointer-events:none;outline:2px solid var(--accent)}
+.tour-card{position:absolute;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));max-width:420px;margin:0 auto;background:var(--surface);color:var(--ink);border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);display:grid;gap:8px}
+.tour-card h3{font:700 18px var(--display);margin:0}.tour-card p{margin:0;color:var(--muted)}
+.tour-step{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.ghost2{background:transparent;border-color:transparent;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.tour-spot{transition:none}}
 .logout{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px}
 .auth{min-height:calc(100vh - 68px);display:grid;place-items:center}
 .auth-card{width:100%;max-width:420px;display:grid;gap:14px}
@@ -176,6 +184,7 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
       <button type="button" class="me" id="meBtn" aria-label="Open my profile"><span class="avatar" id="avatar"></span><span class="eyebrow" id="hello">Welcome</span></button>
       <div class="topicons">
         <button type="button" class="icon" id="bellBtn" aria-label="Updates"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8a2.5 2.5 0 0 0 2.4 2zm7-6V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="dot" id="bellDot" hidden></span></button>
+        <button type="button" class="icon" id="helpBtn" aria-label="Tutorial"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 16h-2v-2h2zm2.1-7.8-.9.9c-.7.7-1.2 1.3-1.2 2.9h-2v-.5c0-1.1.5-2.1 1.2-2.8l1.2-1.3c.4-.3.6-.8.6-1.4a2 2 0 0 0-4 0H8a4 4 0 0 1 8 0c0 .9-.4 1.6-.9 2.2z"/></svg></button>
         <button type="button" class="icon" id="gearBtn" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
       </div>
     </div>
@@ -195,7 +204,7 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     </div>
     <label for="fSource">Sold on
       <select id="fSource">
-        <option value="shopee">Shopee (affiliate link, goes on your bio page)</option>
+        <option value="shopee">Shopee (affiliate link)</option>
         <option value="tiktok">TikTok Shop (yellow basket, no link needed)</option>
       </select>
     </label>
@@ -232,16 +241,6 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
 
   <div class="bulk" id="bulkBar" hidden><span id="bulkTxt"></span><div class="actions"><button type="button" class="ghost" id="bulkClear">Clear</button><button type="button" class="primary" id="bulkNext">Post next</button></div></div>
 
-  <details class="backup" id="bioBox">
-    <summary>Link-in-bio page</summary>
-    <p class="note">Put this link in your TikTok and Threads bio. It lists every Shopee product with its number, so captions can say "Produk #12, link dalam bio".</p>
-    <div class="actions"><code class="biolink" id="bioLink"></code><button type="button" id="copyBio">Copy link</button><button type="button" id="openBio">Open</button></div>
-    <div class="actions"><button type="button" class="primary" id="pushBio">Update bio page</button><span class="note" id="bioStatus"></span></div>
-    <label for="ghToken" style="margin-top:10px">GitHub access key <span class="hint">needed once, saved on this phone only</span>
-      <input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_...">
-    </label>
-    <p class="note">Make one at github.com/settings/personal-access-tokens/new: choose <b>Only select repositories → Pocket-web</b>, then <b>Repository permissions → Contents → Read and write</b>. Tap Generate and paste it here.</p>
-  </details>
 
   <details class="backup">
     <summary>Backup &amp; restore</summary>
@@ -285,7 +284,7 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     <section class="set">
       <h3>Updates</h3>
       <p class="note" id="verInfo"></p>
-      <div class="actions"><button type="button" id="checkUpd">Check for updates</button></div>
+      <div class="actions"><button type="button" id="checkUpd">Check for updates</button><button type="button" id="tourBtn2">Show tutorial again</button></div>
     </section>
 
     <section class="set" id="contactBox">
@@ -302,15 +301,20 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
       <p class="note" id="acctInfo"></p>
     <h4>Change PIN</h4>
     <div class="row3"><input id="pinOld" type="password" inputmode="numeric" maxlength="8" placeholder="Current PIN" aria-label="Current PIN"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" aria-label="New PIN"><button type="button" id="pinBtn">Save PIN</button></div>
-    <h4>Add another agent on this phone</h4>
-    <p class="note">New IDs can only be created here by someone who is logged in. The login screen no longer has Create ID.</p>
-    <div class="row3"><input id="nName" maxlength="40" placeholder="Name" aria-label="New agent name"><input id="nId" maxlength="24" autocapitalize="none" placeholder="Agent ID" aria-label="New agent ID"><input id="nPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" aria-label="New agent PIN"></div>
-    <div class="actions"><button type="button" id="nBtn">Add agent</button></div>
     <h4>Delete my ID</h4>
     <div class="actions"><button type="button" class="del" id="delMeBtn">Delete my ID and products</button></div>
     <div class="msg" id="acctMsg" hidden></div>
       <div class="actions" style="margin-top:14px"><button type="button" id="logoutBtn">Log out</button></div>
     </section>
+  </div>
+</div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-spot" id="tourSpot"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-live="polite">
+    <div class="tour-step" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="actions"><button type="button" id="tourSkip" class="ghost2">Skip</button><span style="flex:1"></span><button type="button" id="tourPrev">Back</button><button type="button" class="primary" id="tourNext">Next</button></div>
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -341,7 +345,8 @@ function loadMine(){
 }
 function migrateNums(){
   const seedNum = {}; SEED_PRODUCTS.forEach(p=>seedNum[p.id]=p.num);
-  products.forEach(p=>{ if(!p.num && seedNum[p.id]) p.num=seedNum[p.id]; if(!p.source) p.source="shopee"; });
+  products.forEach(p=>{ if(!p.num && seedNum[p.id]) p.num=seedNum[p.id]; if(!p.source) p.source="shopee";
+    if(p.tt){ ["plan","caption"].forEach(k=>{ if(p.tt[k]) p.tt[k]=p.tt[k].replace(/Produk #\d+ 👉 link dalam bio/g,"Link dalam bio 🔗"); }); } });
   let n = products.reduce((m,p)=>Math.max(m,p.num||0),0);
   products.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(p=>{ if(!p.num) p.num=++n; });
 }
@@ -406,7 +411,7 @@ const TT_HOOKS = {
   promo:["Barang rumah bawah bajet 💸","Murah tapi guna hari-hari 🛒","Upgrade rumah tanpa pecah tabung 💰","Bajet ketat? Ni pilihan bijak 👇"]
 };
 const TT_TAGS = ["#fyp","#barangrumah","#racunshopee","#homefinds","#rumahkemas","#shopeemy","#ideasrumah","#barangviral"];
-function ttCta(p){ return p.source==="tiktok" ? "Tekan keranjang kuning 🛒" : `Produk #${p.num} 👉 link dalam bio`; }
+function ttCta(p){ return p.source==="tiktok" ? "Tekan keranjang kuning 🛒" : "Link dalam bio 🔗"; }
 function writeTikTok(p, avoidHook){
   const style = TT_HOOKS[p.style] ? p.style : "santai";
   let hooks = TT_HOOKS[style].filter(h=>h!==avoidHook); if(!hooks.length) hooks=TT_HOOKS[style];
@@ -442,7 +447,7 @@ function ensureTikTok(p){ if(!p.tt){ const t=writeTikTok(p); p.tt={plan:t.plan,c
 
 /* ---------- today's picks ---------- */
 const CATS=["Home & Living","Furniture","Home Decor","Kitchen & Dining","Kitchen Storage","Home Improvement","Services & Installations","Pet Supplies","Stationery","Skincare","Cases & Covers","Components","Motorcycles & Parts","Car Replacement Parts","Toys & Education","Jewellery","Others"];
-let sugPlat="shopee", sugCat="", copied="";
+let sugPlat="shopee", sugCat="All", copied="";
 try{ const v=JSON.parse(localStorage.getItem("rak.sugView")||"null"); if(v){ sugPlat=v.p||sugPlat; sugCat=v.c||""; } }catch{}
 function saveView(){ try{ localStorage.setItem("rak.sugView",JSON.stringify({p:sugPlat,c:sugCat})); }catch{} }
 const PER_DAY = 5;
@@ -459,10 +464,10 @@ function renderSug(){
   const added = new Set(products.map(p=>key(p.name,p.source)));
   document.querySelectorAll("#sugPlat button").forEach(b=>b.setAttribute("aria-selected", b.dataset.plat===sugPlat));
   const inPlat = SUGGESTIONS.filter(s=>(s.platform||"shopee")===sugPlat);
-  const cats = CATS.filter(c=>inPlat.some(s=>s.cat===c));
+  const cats = ["All", ...CATS.filter(c=>inPlat.some(s=>s.cat===c))];
   if(!cats.includes(sugCat)) sugCat=cats[0];
   $("#sugCats").innerHTML = cats.map(c=>`<button type="button" role="tab" data-cat="${esc(c)}" aria-selected="${c===sugCat}">${esc(c)}</button>`).join("");
-  const pool = inPlat.filter(s=>s.cat===sugCat);
+  const pool = sugCat==="All" ? inPlat : inPlat.filter(s=>s.cat===sugCat);
   const fresh = pool.filter(s=>!added.has(key(s.name,s.source)));
   const isTT = sugPlat==="tiktok";
   $("#sugNote").innerHTML = isTT
@@ -472,7 +477,7 @@ function renderSug(){
   $("#sugCount").textContent = shown.length+" of "+pool.length;
   $("#shuffleBtn").hidden = pool.length<=PER_DAY;
   el.innerHTML = shown.map(s=>`<div class="sug ${added.has(key(s.name,s.source))?"used":""}">
-    <div><b>${esc(s.name)}</b>${s.price?`<span class="sprice">~RM ${esc(s.price)}</span>`:'<span class="sprice">check price</span>'}</div>
+    <div><b>${esc(s.name)}</b>${sugCat==="All"?`<span class="tag">${esc(s.cat)}</span>`:""}${s.price?`<span class="sprice">~RM ${esc(s.price)}</span>`:'<span class="sprice">check price</span>'}</div>
     <div class="why">${esc(s.why)}</div>
     <div class="sbtns"><button type="button" data-sug="${esc(s.id)}">Use this</button><button type="button" class="copyq" data-sid="${esc(s.id)}" data-q="${esc(s.search||s.name)}" data-plat="${esc(s.platform||"shopee")}">${s.platform==="tiktok"?"Open in TikTok":"Open in Shopee"}</button></div>
     ${copied===s.id?`<div class="why" style="grid-column:1 / -1;color:var(--good)">Opened ${s.platform==="tiktok"?"TikTok":"Shopee"}. If the search box is empty, paste: the product name is copied.</div>`:""}
@@ -579,7 +584,6 @@ $("#addForm").addEventListener("submit", ev=>{
   }
   const p={id:newId(),name,link:source==="shopee"?link:"",price,notes,style,source,num:nextNum(),status:"draft",createdAt:Date.now()};
   const c=writeCaption(p); p.caption=c.text; p.hook=c.hook; ensureTikTok(p);
-  if(source==="shopee") bioDirty(true);
   products.push(p);
   if(save()){ $("#addForm").reset(); render(); renderSug(); toast("Added. Caption is ready below."); document.getElementById("cap-"+p.id)?.scrollIntoView({behavior:"smooth",block:"center"}); }
 });
@@ -618,7 +622,6 @@ $("#list").addEventListener("click", async ev=>{
   }
   if(act==="del"){
     if(!ui[id]?.confirmDel){ ui[id]={...(ui[id]||{}),confirmDel:true}; render(); return; }
-    if(p.source!=="tiktok") bioDirty(true);
     products=products.filter(x=>x.id!==id); delete ui[id]; selected.delete(id); save(); render(); renderSug();
   }
 });
@@ -649,7 +652,6 @@ $("#restoreBtn").addEventListener("click",()=>{
     if(!d || !Array.isArray(d.products)) throw 0;
     const have=new Set(products.map(p=>p.id)); let added=0;
     d.products.forEach(p=>{ if(p && p.id && p.link && !have.has(p.id)){ if(!p.num) p.num=nextNum(); if(!p.source) p.source="shopee"; products.push(p); added++; } });
-    if(added) bioDirty(true);
     save(); render(); renderSug(); box.value=""; box.hidden=true;
     toast(added ? "Restored "+added+" products." : "Nothing new in that backup.");
   }catch{ toast("That doesn't look like a Rak Affiliate backup."); }
@@ -660,21 +662,6 @@ function syncSource(){ $("#linkLabel").hidden = $("#fSource").value!=="shopee"; 
 $("#fSource").addEventListener("change", syncSource);
 $("#addForm").addEventListener("reset", ()=>setTimeout(syncSource,0));
 
-/* ---------- link-in-bio page (hosted on GitHub Pages, Pocket-web/shop) ---------- */
-const BIO_URL = "https://mirzan0693-dev.github.io/Pocket-web/shop/";
-const BIO_API = "https://api.github.com/repos/mirzan0693-dev/Pocket-web/contents/shop/products.json";
-$("#bioLink").textContent = BIO_URL;
-try{ $("#ghToken").value = localStorage.getItem("rak.ghToken")||""; }catch{}
-$("#ghToken").addEventListener("change",()=>{ try{ localStorage.setItem("rak.ghToken",$("#ghToken").value.trim()); }catch{} });
-function bioDirty(v){ try{ localStorage.setItem("rak.bioDirty", v?"1":""); }catch{} showBioStatus(); }
-function showBioStatus(t){
-  let dirty=false; try{ dirty=!!localStorage.getItem("rak.bioDirty"); }catch{}
-  $("#bioStatus").textContent = t || (dirty ? "You have changes not on the bio page yet." : "");
-}
-showBioStatus();
-$("#copyBio").addEventListener("click", async ()=>{ if(await copyText(BIO_URL)) toast("Bio link copied."); });
-$("#openBio").addEventListener("click", ()=>openUrl(BIO_URL));
-
 const httpWaiters = {};
 window.__rakHttp = (id,status,text)=>{ const w=httpWaiters[id]; if(w){ delete httpWaiters[id]; w({status,text}); } };
 function http(method,url,headers,body){
@@ -684,30 +671,10 @@ function http(method,url,headers,body){
   return fetch(url,{method,headers,body:body||undefined}).then(async r=>({status:r.status,text:await r.text()})).catch(()=>({status:0,text:""}));
 }
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
-$("#pushBio").addEventListener("click", async ()=>{
-  const token=$("#ghToken").value.trim();
-  try{ localStorage.setItem("rak.ghToken",token); }catch{}
-  if(!token){ showBioStatus("Paste your GitHub access key below first."); $("#ghToken").focus(); return; }
-  const btn=$("#pushBio"); btn.disabled=true; showBioStatus("Updating…");
-  const headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"};
-  try{
-    const cur=await http("GET",BIO_API,headers);
-    if(cur.status===401||cur.status===403){ showBioStatus("GitHub refused the access key. Make a new one with Contents: Read and write on Pocket-web."); return; }
-    let sha; if(cur.status===200){ try{ sha=JSON.parse(cur.text).sha; }catch{} }
-    else if(cur.status!==404){ showBioStatus(cur.status? "GitHub error "+cur.status+". Try again." : "No internet connection. Try again."); return; }
-    const list=products.filter(p=>p.source!=="tiktok" && p.link).sort((a,b)=>a.num-b.num).map(p=>({num:p.num,name:p.name,price:p.price||"",link:p.link}));
-    const json=JSON.stringify({updated:todayKey(),products:list},null,1);
-    const body=JSON.stringify({message:"Update bio page products ("+list.length+")",content:b64utf8(json),sha});
-    const put=await http("PUT",BIO_API,headers,body);
-    if(put.status===200||put.status===201){ bioDirty(false); showBioStatus("Updated with "+list.length+" products. It goes live in about a minute."); }
-    else if(put.status===409){ showBioStatus("The page changed at the same time. Tap Update again."); }
-    else showBioStatus(put.status===401||put.status===403 ? "GitHub refused the access key. It needs Contents: Read and write on Pocket-web." : "GitHub error "+put.status+". Try again.");
-  } finally { btn.disabled=false; }
-});
 
 
 /* ---------- app info, config, updates ---------- */
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 const CONFIG_URL = "https://mirzan0693-dev.github.io/Pocket-web/rak/config.json";
 const ADMIN_WA = "https://wa.me/qr/Y4V5FEAWS5UYO1";
 const PLATFORM = native ? "Android app" : "Web app";
@@ -873,6 +840,45 @@ $("#ctSend").addEventListener("click", async ()=>{
   toast(ok?"Message copied. Paste it in WhatsApp and send.":"Opening WhatsApp. Type your message there.");
 });
 
+/* ---------- tutorial ---------- */
+const TOUR=[
+  {sel:".topbar", title:"Welcome to Rak Affiliate", text:"This is your home. Tap your photo or ⚙ for Settings, 🔔 for updates, and ? to see this tutorial again."},
+  {sel:"#addForm", title:"1. Add a product", text:"Type the product name and price, choose Shopee or TikTok Shop, and paste your affiliate link (Shopee app → product → Share → Copy link). Tap Add & write caption."},
+  {sel:"#sugPlat", title:"2. Today's picks", text:"No idea what to sell? Pick Shopee or TikTok Shop here. You get 5 trending picks a day, and Shuffle shows others."},
+  {sel:"#sugCats", title:"3. Categories", text:"Swipe the categories. All shows everything. Tap Open in Shopee or Open in TikTok to find a pick, then Use this to fill the form."},
+  {sel:"#list", title:"4. Your products", text:"Each product gets a Malay caption you can edit. Post to Threads opens Threads with it ready. Share sends it to Buffer, WhatsApp or any app. Rewrite gives a new caption."},
+  {sel:"#list details.tt", title:"5. TikTok plan", text:"Open this under any product for a shot-by-shot video plan and a TikTok caption with hashtags. Mark it posted when you're done."},
+  {sel:"#gearBtn", title:"6. Make it yours", text:"In Settings you can add your photo and details, change the theme or background, make text bigger, and contact admin for help or a new user."}
+];
+let tourI=0;
+function tourShow(){
+  const st=TOUR[tourI];
+  let el=document.querySelector(st.sel);
+  if(!el || el.offsetParent===null){ el=document.querySelector(".topbar"); }
+  const tall = el.getBoundingClientRect().height > innerHeight*0.45;
+  el.scrollIntoView({block: tall ? "start" : "center"});
+  setTimeout(()=>{
+    const r=el.getBoundingClientRect(), pad=6, spot=$("#tourSpot"), card=$("#tourCard");
+    const top=Math.max(r.top-pad, 8), bottom=Math.min(r.bottom+pad, top+innerHeight*0.45);
+    spot.style.left=(r.left-pad)+"px"; spot.style.top=top+"px"; spot.style.width=(r.width+pad*2)+"px"; spot.style.height=Math.max(bottom-top,40)+"px";
+    $("#tourStep").textContent=`Step ${tourI+1} of ${TOUR.length}`; $("#tourTitle").textContent=st.title; $("#tourText").textContent=st.text;
+    $("#tourPrev").hidden = tourI===0; $("#tourNext").textContent = tourI===TOUR.length-1 ? "Done" : "Next";
+    const ch = card.offsetHeight || 220;
+    card.style.top=""; card.style.bottom="";
+    if(bottom + 12 + ch < innerHeight - 8) card.style.top=(bottom+12)+"px";
+    else if(top - 12 - ch > 8) card.style.top=(top-12-ch)+"px";
+    else card.style.bottom="16px";
+  }, 60);
+}
+function tourStart(){ closeSettings(); tourI=0; $("#tour").hidden=false; tourShow(); }
+function tourEnd(){ $("#tour").hidden=true; if(me){ const s=getSettings(); s.tourDone=true; putSettings(s); } }
+$("#tourNext").addEventListener("click",()=>{ if(tourI<TOUR.length-1){ tourI++; tourShow(); } else tourEnd(); });
+$("#tourPrev").addEventListener("click",()=>{ if(tourI>0){ tourI--; tourShow(); } });
+$("#tourSkip").addEventListener("click", tourEnd);
+$("#helpBtn").addEventListener("click", tourStart);
+$("#tourBtn2").addEventListener("click", tourStart);
+addEventListener("resize",()=>{ if(!$("#tour").hidden) tourShow(); });
+
 /* ---------- login ---------- */
 const MAX_TRIES=5, LOCK_MS=60000, IDLE_MS=15*60000;
 let authMode="login";
@@ -910,7 +916,7 @@ $("#authForm").addEventListener("submit",ev=>{
     const id=raw.trim().toLowerCase();
     if(!name) return authErr("Type your name.");
     if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return authErr("Agent ID needs 3 to 24 letters or numbers, no spaces.");
-    if(Object.keys(acc).length) return authErr("This phone already has an agent. Ask them to add you from My account.");
+    if(Object.keys(acc).length) return authErr("This phone already has an agent ID. Ask the admin for help from Settings → Contact admin.");
     acc[id]={name,pin:hashPin(id,pin),created:Date.now()};
     if(!saveAccounts(acc)) return authErr("Couldn't save on this phone. Storage may be full.");
     try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{}
@@ -949,12 +955,13 @@ function startSession(id, remember){
   $("#acctInfo").textContent=`Logged in as ${me.name} (ID: ${me.id}). ${remembered?"You stay logged in on this phone.":"You'll be logged out when you close the app or after 15 minutes of no activity."}`;
   $("#auth").hidden=true; $("#app").hidden=false;
   $("#authForm").reset(); $("#aRemember").checked=true;
-  applyAll(); render(); renderSug(); syncSource(); showBioStatus(); bumpIdle(); closeSettings();
+  applyAll(); render(); renderSug(); syncSource(); bumpIdle(); closeSettings();
   loadConfig().then(()=>{ showUpdate(); flushRegs(); });
+  if(!getSettings().tourDone) setTimeout(tourStart, 400);
   window.scrollTo(0,0);
 }
 function showAuth(){
-  me=null; products=[]; $("#toast").hidden=true; clearTimeout(idleT); closeSettings(); resetLook();
+  me=null; products=[]; $("#toast").hidden=true; $("#tour").hidden=true; clearTimeout(idleT); closeSettings(); resetLook();
   $("#app").hidden=true; $("#auth").hidden=false;
   const ids=Object.keys(accounts());
   setAuthMode(ids.length ? "login" : "signup");
@@ -970,17 +977,6 @@ $("#pinBtn").addEventListener("click",()=>{
   if(acc[me.id].pin!==hashPin(me.id,o)) return acctMsg(false,"Current PIN is wrong.");
   if(!/^\d{4,8}$/.test(n)) return acctMsg(false,"New PIN must be 4 to 8 digits.");
   acc[me.id].pin=hashPin(me.id,n); saveAccounts(acc); $("#pinOld").value=$("#pinNew").value=""; acctMsg(true,"PIN changed.");
-});
-$("#nBtn").addEventListener("click",()=>{
-  const acc=accounts(), name=$("#nName").value.trim(), id=$("#nId").value.trim().toLowerCase(), pin=$("#nPin").value.trim();
-  if(!name) return acctMsg(false,"Type the new agent's name.");
-  if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return acctMsg(false,"Agent ID needs 3 to 24 letters or numbers, no spaces.");
-  if(acc[id]) return acctMsg(false,"That ID is already used on this phone.");
-  if(Object.keys(acc).some(k=>(acc[k].name||"").toLowerCase()===name.toLowerCase())) return acctMsg(false,"An agent with that name already exists. Use a different name.");
-  if(!/^\d{4,8}$/.test(pin)) return acctMsg(false,"PIN must be 4 to 8 digits.");
-  acc[id]={name,pin:hashPin(id,pin),created:Date.now(),addedBy:me.id}; saveAccounts(acc);
-  queueReg({type:"New agent", id, name, phone:"", addedBy:me.id});
-  $("#nName").value=$("#nId").value=$("#nPin").value=""; acctMsg(true,`Added ${name}. To switch, tap Log out, then ${name} taps their name and enters their PIN.`);
 });
 let delArmed=false;
 $("#delMeBtn").addEventListener("click",()=>{
