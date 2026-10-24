@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pilihan Rumah @ijanmadu</title>
+<meta name="description" content="Barang rumah & perabot murah pilihan @ijanmadu. Cari ikut nombor produk dari video.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: phone-first shop list; a big number badge on each row matches "Produk #N" in videos */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#18241f; --muted:#5d6b64; --line:#dde3dd;
+  --accent:#e2552b; --accent-ink:#ffffff; --accent-soft:#fbe6dd;
+  --display:"Bricolage Grotesque","Segoe UI",Roboto,system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",Roboto,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"Roboto Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111815; --surface:#19221e; --ink:#e8eee9; --muted:#9aa8a1; --line:#2b3732;
+  --accent:#ff7a4d; --accent-ink:#1a0f0a; --accent-soft:#3a2219; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:max(24px,env(safe-area-inset-top,0px)) max(40px,env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(28px,8vw,40px)/1.05 var(--display);margin:6px 0 0;letter-spacing:-.02em}
+header p{margin:8px 0 0;color:var(--muted)}
+.find{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 6px 6px 14px}
+.find span{font:500 13px var(--mono);color:var(--muted);white-space:nowrap}
+.find input{flex:1;min-width:0;font:600 18px var(--body);color:var(--ink);background:transparent;border:0;padding:8px 4px;outline:none}
+.find:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.item.hit{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.num{font:800 22px/1 var(--display);color:var(--accent);background:var(--accent-soft);border-radius:12px;min-width:54px;padding:12px 8px;text-align:center;font-variant-numeric:tabular-nums}
+.name{font:600 15px/1.3 var(--display);overflow-wrap:anywhere}
+.price{font:500 12.5px var(--mono);color:var(--muted);margin-top:2px}
+.buy{font:600 14px var(--body);background:var(--accent);color:var(--accent-ink);text-decoration:none;border-radius:10px;padding:10px 14px;white-space:nowrap}
+.buy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--muted)}
+footer{font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Shopee · @ijanmadu</div>
+    <h1>Pilihan Rumah</h1>
+    <p>Barang rumah &amp; perabot murah yang aku share kat TikTok dan Threads. Nampak nombor produk dalam video? Taip kat bawah.</p>
+  </header>
+
+  <label class="find" for="q"><span>Produk #</span><input id="q" inputmode="numeric" placeholder="12" autocomplete="off" aria-label="Nombor produk"></label>
+
+  <div class="list" id="list"><div class="empty">Sedang muat senarai produk…</div></div>
+
+  <footer>Harga ikut Shopee dan boleh berubah. Sebahagian link ialah link affiliate.</footer>
+</div>
+<script>
+let items=[];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function render(){
+  const q=document.getElementById("q").value.replace(/\D/g,"");
+  const list=document.getElementById("list");
+  if(!items.length){ list.innerHTML='<div class="empty">Belum ada produk. Datang lagi nanti 🙂</div>'; return; }
+  let shown=items;
+  if(q){ shown=items.filter(p=>String(p.num)===q); if(!shown.length){ list.innerHTML=`<div class="empty">Tiada produk #${esc(q)}. Cuba nombor lain.</div>`; return; } }
+  list.innerHTML=shown.map(p=>`<div class="item ${q?"hit":""}">
+    <div class="num">#${esc(p.num)}</div>
+    <div><div class="name">${esc(p.name)}</div>${p.price?`<div class="price">RM ${esc(p.price)}</div>`:""}</div>
+    <a class="buy" href="${esc(p.link)}" target="_blank" rel="noopener sponsored">Beli</a>
+  </div>`).join("");
+}
+document.getElementById("q").addEventListener("input",render);
+const hash=location.hash.replace(/\D/g,""); if(hash) document.getElementById("q").value=hash;
+fetch("products.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(d=>{
+  items=(d.products||[]).filter(p=>p&&p.link&&/^https:\/\//.test(p.link)).sort((a,b)=>b.num-a.num);
+  render();
+}).catch(()=>{ document.getElementById("list").innerHTML='<div class="empty">Tak dapat muat senarai. Cuba refresh.</div>'; });
+</script>
+</body>
+</html>
