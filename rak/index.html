@@ -94,7 +94,36 @@ button:disabled{opacity:.55;cursor:default}
 .chips button{font:600 12.5px var(--body);padding:6px 12px;border-radius:99px}
 .chips button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:14px;z-index:20;max-width:calc(100% - 32px);text-align:center}
-.hello{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.me{display:flex;align-items:center;gap:10px;background:transparent;border:0;padding:0;min-width:0}
+.me .eyebrow{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar{width:40px;height:40px;border-radius:50%;flex:none;background:var(--accent-soft) center/cover no-repeat;color:var(--accent);display:grid;place-items:center;font:700 16px var(--display);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.avatar.xl{width:96px;height:96px;font-size:36px}
+.topicons{display:flex;gap:6px}
+.icon{position:relative;width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:50%;color:var(--ink)}
+.dot{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--bad);border:2px solid var(--surface)}
+.upd{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:14px;padding:12px 14px;margin-top:10px}
+.upd b{display:block;font:600 15px var(--display)}.upd span{font-size:13px;color:var(--muted)}
+.sheet{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(16px,env(safe-area-inset-top,0px)) 48px}
+.sheet-head{display:flex;align-items:center;gap:10px}
+.sheet-head h2{font:800 26px var(--display);margin:0}
+.back{width:42px;height:42px;padding:0;border-radius:50%;font-size:20px}
+.set{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.set h3{font:600 18px var(--display);margin:0}
+.set h4{font:600 14px var(--display);margin:6px 0 0}
+.pf{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.row2{grid-template-columns:1fr}}
+.btn{display:inline-block;font:600 14px var(--body);border-radius:9px;padding:10px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.theme{display:grid;gap:6px;padding:8px;border-radius:12px;text-align:left;font:600 12.5px var(--body)}
+.theme[aria-checked="true"]{outline:2px solid var(--accent);outline-offset:1px}
+.swatch{height:38px;border-radius:8px;display:flex;align-items:flex-end;gap:4px;padding:5px;border:1px solid rgba(127,127,127,.25)}
+.swatch i{width:14px;height:14px;border-radius:50%;display:block}
+.fonts button[aria-checked="true"],#ctTopic button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink)}
+#ctTopic button,.fonts button{border:0;border-radius:9px;padding:9px 6px;background:transparent;color:var(--muted)}
+body.has-bg{background-size:cover;background-position:center;background-attachment:fixed}
+.wrap{zoom:var(--zoom,1)}
 .logout{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px}
 .auth{min-height:calc(100vh - 68px);display:grid;place-items:center}
 .auth-card{width:100%;max-width:420px;display:grid;gap:14px}
@@ -131,6 +160,7 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     <div class="who" id="who"></div>
     <form id="authForm" autocomplete="off">
       <label for="aName" id="aNameLabel" hidden>Your name <span class="hint">shown as "Welcome, name"</span><input id="aName" maxlength="40" placeholder="e.g. Mirzan"></label>
+      <label for="aPhone" id="aPhoneLabel" hidden>WhatsApp number <span class="hint">for the admin's agent list</span><input id="aPhone" inputmode="tel" maxlength="20" placeholder="012-345 6789"></label>
       <label for="aId"><span id="aIdText">Agent ID or name</span> <span class="hint" id="aIdHint"></span><input id="aId" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. mirzan01"></label>
       <label for="aPin">PIN <span class="hint" id="aPinHint">4 to 8 digits</span><input id="aPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••"></label>
       <label class="remember" for="aRemember"><input type="checkbox" id="aRemember" checked> Remember me on this phone</label>
@@ -142,7 +172,14 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
 </div>
 <div class="wrap" id="app" hidden>
   <header>
-    <div class="eyebrow hello"><span id="hello">Welcome</span><button type="button" class="logout" id="logoutBtn">Log out</button></div>
+    <div class="topbar">
+      <button type="button" class="me" id="meBtn" aria-label="Open my profile"><span class="avatar" id="avatar"></span><span class="eyebrow" id="hello">Welcome</span></button>
+      <div class="topicons">
+        <button type="button" class="icon" id="bellBtn" aria-label="Updates"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8a2.5 2.5 0 0 0 2.4 2zm7-6V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="dot" id="bellDot" hidden></span></button>
+        <button type="button" class="icon" id="gearBtn" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+      </div>
+    </div>
+    <div class="upd" id="updBanner" hidden><div><b>New update available</b><span id="updText">Please contact admin to get the latest version.</span></div><button type="button" class="primary" id="updContact">Contact admin</button></div>
     <h1>Rak Affiliate</h1>
     <p>Add a product and a Malay caption is written for you. Edit it, then post it to Threads or share it to Buffer.</p>
   </header>
@@ -206,9 +243,63 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     <p class="note">Make one at github.com/settings/personal-access-tokens/new: choose <b>Only select repositories → Pocket-web</b>, then <b>Repository permissions → Contents → Read and write</b>. Tap Generate and paste it here.</p>
   </details>
 
-  <details class="backup" id="acctBox">
-    <summary>My account &amp; agents</summary>
-    <p class="note" id="acctInfo"></p>
+  <details class="backup">
+    <summary>Backup &amp; restore</summary>
+    <p class="note">Products are saved on this phone only. Uninstalling the app deletes them, so share a backup to WhatsApp or Drive now and then.</p>
+    <div class="actions"><button type="button" id="backupBtn">Share backup</button><button type="button" id="restoreBtn">Restore from backup</button></div>
+    <textarea id="restoreBox" rows="4" placeholder="Paste a backup here, then tap Restore again" hidden></textarea>
+  </details>
+
+  <p class="note">Captions are capped at 500 characters (the Threads limit). <b>Post to Threads</b> opens Threads with the caption filled in. <b>Share</b> lets you pick Buffer, WhatsApp or any other app.</p>
+</div>
+<div class="sheet" id="settings" hidden>
+  <div class="wrap">
+    <div class="sheet-head"><button type="button" class="back" id="setBack" aria-label="Back">←</button><h2>Settings</h2></div>
+
+    <section class="set" id="setProfile">
+      <h3>Profile</h3>
+      <div class="pf">
+        <span class="avatar xl" id="avatarBig"></span>
+        <div class="actions"><label class="btn" for="avatarFile">Change photo</label><input type="file" id="avatarFile" accept="image/*" hidden><button type="button" id="avatarRemove">Remove</button></div>
+      </div>
+      <label for="uName">Name<input id="uName" maxlength="40"></label>
+      <div class="row2"><label for="uPhone">WhatsApp number<input id="uPhone" inputmode="tel" maxlength="20" placeholder="012-345 6789"></label>
+      <label for="uEmail">Email<input id="uEmail" type="email" maxlength="60" placeholder="name@gmail.com"></label></div>
+      <div class="row2"><label for="uTikTok">TikTok<input id="uTikTok" maxlength="40" placeholder="@yourtiktok"></label>
+      <label for="uThreads">Threads<input id="uThreads" maxlength="40" placeholder="@yourthreads"></label></div>
+      <div class="actions"><button type="button" class="primary" id="uSave">Save profile</button><span class="note" id="uMsg"></span></div>
+    </section>
+
+    <section class="set">
+      <h3>Theme</h3>
+      <div class="themes" id="themeGrid"></div>
+      <h4>Your own background</h4>
+      <p class="note">Pick a photo from your gallery. Cards stay solid so text is easy to read.</p>
+      <div class="actions"><label class="btn" for="bgFile">Upload from gallery</label><input type="file" id="bgFile" accept="image/*" hidden><button type="button" id="bgRemove">Remove background</button></div>
+      <h4>Font size</h4>
+      <div class="plat fonts" id="fontSize" role="radiogroup" aria-label="Font size">
+        <button type="button" data-z="0.9">Small</button><button type="button" data-z="1">Normal</button><button type="button" data-z="1.12">Large</button><button type="button" data-z="1.25">Extra large</button>
+      </div>
+    </section>
+
+    <section class="set">
+      <h3>Updates</h3>
+      <p class="note" id="verInfo"></p>
+      <div class="actions"><button type="button" id="checkUpd">Check for updates</button></div>
+    </section>
+
+    <section class="set" id="contactBox">
+      <h3>Contact admin</h3>
+      <p class="note">Choose what you need. Your message is copied and WhatsApp opens. Paste it in the chat and send.</p>
+      <div class="plat" id="ctTopic" role="radiogroup" aria-label="Topic"><button type="button" data-t="new" aria-checked="true">Request new user</button><button type="button" data-t="issue" aria-checked="false">App issue</button></div>
+      <div id="ctNew"><div class="row2"><label for="ctName">New user's name<input id="ctName" maxlength="40"></label><label for="ctPhone">Their WhatsApp number<input id="ctPhone" inputmode="tel" maxlength="20"></label></div></div>
+      <div id="ctIssue" hidden><label for="ctText">What's wrong?<textarea id="ctText" rows="3" maxlength="600" placeholder="e.g. Post to Threads button does nothing"></textarea></label></div>
+      <div class="actions"><button type="button" class="primary" id="ctSend">Contact admin on WhatsApp</button></div>
+    </section>
+
+    <section class="set" id="acctBox">
+      <h3>Account</h3>
+      <p class="note" id="acctInfo"></p>
     <h4>Change PIN</h4>
     <div class="row3"><input id="pinOld" type="password" inputmode="numeric" maxlength="8" placeholder="Current PIN" aria-label="Current PIN"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" aria-label="New PIN"><button type="button" id="pinBtn">Save PIN</button></div>
     <h4>Add another agent on this phone</h4>
@@ -218,16 +309,9 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     <h4>Delete my ID</h4>
     <div class="actions"><button type="button" class="del" id="delMeBtn">Delete my ID and products</button></div>
     <div class="msg" id="acctMsg" hidden></div>
-  </details>
-
-  <details class="backup">
-    <summary>Backup &amp; restore</summary>
-    <p class="note">Products are saved on this phone only. Uninstalling the app deletes them, so share a backup to WhatsApp or Drive now and then.</p>
-    <div class="actions"><button type="button" id="backupBtn">Share backup</button><button type="button" id="restoreBtn">Restore from backup</button></div>
-    <textarea id="restoreBox" rows="4" placeholder="Paste a backup here, then tap Restore again" hidden></textarea>
-  </details>
-
-  <p class="note">Captions are capped at 500 characters (the Threads limit). <b>Post to Threads</b> opens Threads with the caption filled in. <b>Share</b> lets you pick Buffer, WhatsApp or any other app.</p>
+      <div class="actions" style="margin-top:14px"><button type="button" id="logoutBtn">Log out</button></div>
+    </section>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -272,7 +356,7 @@ async function copyText(t){
   if(native && native.copy){ native.copy(t); return true; }
   try{ await navigator.clipboard.writeText(t); return true; }catch{ return false; }
 }
-function openUrl(u){ if(native && native.openUrl) native.openUrl(u); else window.open(u,"_blank"); }
+function openUrl(u){ if(native && native.openUrl) native.openUrl(u); else { const w=window.open(u,"_blank"); if(!w) location.href=u; } }
 function shareText(t){
   if(native && native.share){ native.share(t); return true; }
   if(navigator.share){ navigator.share({text:t}).catch(()=>{}); return true; }
@@ -621,6 +705,174 @@ $("#pushBio").addEventListener("click", async ()=>{
   } finally { btn.disabled=false; }
 });
 
+
+/* ---------- app info, config, updates ---------- */
+const APP_VERSION = 10;
+const CONFIG_URL = "https://mirzan0693-dev.github.io/Pocket-web/rak/config.json";
+const ADMIN_WA = "https://wa.me/qr/Y4V5FEAWS5UYO1";
+const PLATFORM = native ? "Android app" : "Web app";
+let config = null;
+async function loadConfig(){
+  const r = await http("GET", CONFIG_URL+"?t="+Date.now(), {});
+  if(r.status===200){ try{ config=JSON.parse(r.text); try{ localStorage.setItem("rak.config", r.text); }catch{} return config; }catch{} }
+  try{ config = config || JSON.parse(localStorage.getItem("rak.config")||"null"); }catch{}
+  return config;
+}
+function showUpdate(){
+  const latest = config && +config.latestVersion || 0;
+  const has = latest > APP_VERSION;
+  $("#bellDot").hidden = !has;
+  $("#updBanner").hidden = !has;
+  if(has) $("#updText").textContent = `Version ${latest} is ready${config.notes?": "+config.notes:""}. Please contact admin to get it.`;
+  $("#verInfo").textContent = `You're on version ${APP_VERSION} (${PLATFORM}). ` + (latest ? (has ? `Version ${latest} is available. Please contact admin.` : "This is the latest version.") : "Couldn't check right now.");
+  return has;
+}
+$("#bellBtn").addEventListener("click", async ()=>{ await loadConfig(); if(showUpdate()) $("#updBanner").scrollIntoView({behavior:"smooth",block:"center"}); else toast("No new updates. You're on the latest version."); });
+$("#checkUpd").addEventListener("click", async ()=>{ $("#verInfo").textContent="Checking…"; await loadConfig(); showUpdate(); });
+$("#updContact").addEventListener("click", ()=>{ openSettings(); setTopic("issue"); $("#ctText").value=`Please send me the latest Rak Affiliate update. I'm on version ${APP_VERSION} (${PLATFORM}).`; $("#contactBox").scrollIntoView({block:"start"}); });
+
+/* ---------- registrations -> admin Google Sheet ---------- */
+function queueReg(row){
+  let q=[]; try{ q=JSON.parse(localStorage.getItem("rak.regQueue")||"[]"); }catch{}
+  q.push({...row, at:new Date().toISOString(), app:PLATFORM, version:APP_VERSION});
+  try{ localStorage.setItem("rak.regQueue", JSON.stringify(q.slice(-50))); }catch{}
+  flushRegs();
+}
+let flushing=false;
+async function flushRegs(){
+  if(flushing) return; flushing=true;
+  try{
+    if(!config) await loadConfig();
+    const url = config && config.sheetUrl; if(!url) return;
+    let q=[]; try{ q=JSON.parse(localStorage.getItem("rak.regQueue")||"[]"); }catch{}
+    while(q.length){
+      const body=JSON.stringify(q[0]); let ok=false;
+      if(native && native.http){ const r=await http("POST",url,{"Content-Type":"text/plain;charset=utf-8"},body); ok = r.status>=200 && r.status<400; }
+      else { try{ await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body}); ok=true; }catch{ ok=false; } }
+      if(!ok) break;
+      q.shift(); try{ localStorage.setItem("rak.regQueue", JSON.stringify(q)); }catch{}
+    }
+  } finally { flushing=false; }
+}
+
+/* ---------- per-agent settings: themes, font, background, avatar, profile ---------- */
+const DARK_STATUS={good:"#6fd39e",goodSoft:"#173528",warn:"#e8b75a",warnSoft:"#3a2d12",bad:"#ff8a80",badSoft:"#3d1c1a"};
+const LIGHT_STATUS={good:"#1f7a4d",goodSoft:"#dcf0e4",warn:"#9a6400",warnSoft:"#f8ecd2",bad:"#b3261e",badSoft:"#f8dedb"};
+const THEMES=[
+  {id:"auto",name:"Default",auto:true,sw:["#f3f5f2","#e2552b","#111815"]},
+  {id:"daylight",name:"Daylight",dark:false,bg:"#f3f5f2",surface:"#ffffff",ink:"#18241f",muted:"#5d6b64",line:"#dde3dd",accent:"#e2552b",accentInk:"#ffffff",accentSoft:"#fbe6dd"},
+  {id:"midnight",name:"Midnight",dark:true,bg:"#111815",surface:"#19221e",ink:"#e8eee9",muted:"#9aa8a1",line:"#2b3732",accent:"#ff7a4d",accentInk:"#1a0f0a",accentSoft:"#3a2219"},
+  {id:"ocean",name:"Ocean",dark:false,bg:"#eef4f8",surface:"#ffffff",ink:"#0f2433",muted:"#55697a",line:"#d4e1ea",accent:"#1673b8",accentInk:"#ffffff",accentSoft:"#dcebf7"},
+  {id:"forest",name:"Forest",dark:true,bg:"#0f1a14",surface:"#16241c",ink:"#e4efe7",muted:"#93a99b",line:"#24382c",accent:"#4cc38a",accentInk:"#06150d",accentSoft:"#173527"},
+  {id:"rose",name:"Rose",dark:false,bg:"#fbf1f3",surface:"#ffffff",ink:"#2c1219",muted:"#7a5a62",line:"#f0d9de",accent:"#d6336c",accentInk:"#ffffff",accentSoft:"#fbdde7"},
+  {id:"grape",name:"Grape",dark:true,bg:"#15111f",surface:"#1e182c",ink:"#ece8f6",muted:"#a59cbb",line:"#30284a",accent:"#a78bfa",accentInk:"#140d26",accentSoft:"#2c2346"},
+  {id:"sand",name:"Sand",dark:false,bg:"#f5efe6",surface:"#fffcf7",ink:"#2b2118",muted:"#776655",line:"#e7dccb",accent:"#b5651d",accentInk:"#ffffff",accentSoft:"#f3e2cf"},
+  {id:"mono",name:"Mono",dark:false,bg:"#f4f4f4",surface:"#ffffff",ink:"#111111",muted:"#666666",line:"#dddddd",accent:"#111111",accentInk:"#ffffff",accentSoft:"#e6e6e6"},
+  {id:"sunset",name:"Sunset",dark:true,bg:"#1a1210",surface:"#241915",ink:"#f6ece6",muted:"#b8a097",line:"#3a2a24",accent:"#ffb347",accentInk:"#2a1600",accentSoft:"#3d2a15"}
+];
+const TOKENS=["bg","surface","ink","muted","line","accent","accentInk","accentSoft","good","goodSoft","warn","warnSoft","bad","badSoft"];
+const cssName=k=>"--"+k.replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+function settingsKey(){ return "rak.settings:"+me.id; }
+function getSettings(){ try{ return JSON.parse(localStorage.getItem(settingsKey())||"{}"); }catch{ return {}; } }
+function putSettings(s){ try{ localStorage.setItem(settingsKey(), JSON.stringify(s)); return true; }catch{ toast("Phone storage is full. Try a smaller photo."); return false; } }
+function getImg(kind){ try{ return localStorage.getItem("rak."+kind+":"+me.id)||""; }catch{ return ""; } }
+function putImg(kind,data){ try{ if(data) localStorage.setItem("rak."+kind+":"+me.id,data); else localStorage.removeItem("rak."+kind+":"+me.id); return true; }catch{ toast("That photo is too big for this phone's storage."); return false; } }
+function applyTheme(id){
+  const th=THEMES.find(x=>x.id===id)||THEMES[0], root=document.documentElement.style;
+  TOKENS.forEach(k=>root.removeProperty(cssName(k))); root.removeProperty("color-scheme");
+  if(!th.auto){ const st=th.dark?DARK_STATUS:LIGHT_STATUS; TOKENS.forEach(k=>root.setProperty(cssName(k), th[k]!==undefined?th[k]:st[k])); root.setProperty("color-scheme", th.dark?"dark":"light"); }
+  const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.content = th.auto ? "#e2552b" : th.accent;
+}
+function applyBg(){
+  const img = me ? getImg("bg") : "";
+  document.body.classList.toggle("has-bg", !!img);
+  document.body.style.backgroundImage = img ? `linear-gradient(color-mix(in srgb, var(--bg) 72%, transparent), color-mix(in srgb, var(--bg) 72%, transparent)), url("${img}")` : "";
+}
+function applyFont(z){ document.documentElement.style.setProperty("--zoom", String(z||1)); }
+function initials(n){ return (n||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase(); }
+function paintAvatar(){
+  const img=getImg("avatar");
+  ["#avatar","#avatarBig"].forEach(sel=>{ const el=$(sel); el.style.backgroundImage = img?`url("${img}")`:""; el.textContent = img ? "" : initials(me.name); });
+}
+function applyAll(){
+  const s=getSettings();
+  applyTheme(s.theme||"auto"); applyFont(s.font||1); applyBg(); paintAvatar();
+}
+function resetLook(){ applyTheme("auto"); applyFont(1); document.body.classList.remove("has-bg"); document.body.style.backgroundImage=""; }
+function renderThemes(){
+  const cur=getSettings().theme||"auto";
+  $("#themeGrid").innerHTML = THEMES.map(th=>{
+    const sw = th.sw || [th.bg, th.accent, th.ink];
+    return `<button type="button" class="theme" role="radio" data-theme="${th.id}" aria-checked="${th.id===cur}"><span class="swatch" style="background:${sw[0]}"><i style="background:${sw[1]}"></i><i style="background:${sw[2]}"></i></span>${esc(th.name)}</button>`;
+  }).join("");
+  const z=String(getSettings().font||1);
+  document.querySelectorAll("#fontSize button").forEach(b=>b.setAttribute("aria-checked", b.dataset.z===z));
+}
+$("#themeGrid").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-theme]"); if(!b) return; const s=getSettings(); s.theme=b.dataset.theme; putSettings(s); applyTheme(s.theme); renderThemes(); });
+$("#fontSize").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-z]"); if(!b) return; const s=getSettings(); s.font=+b.dataset.z; putSettings(s); applyFont(s.font); renderThemes(); });
+
+/* shrink a gallery photo before saving it on the phone */
+function readImage(file, maxSide, square){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{ const im=new Image(); im.onload=()=>{
+      let sx=0, sy=0, sw=im.width, sh=im.height;
+      if(square){ const m=Math.min(sw,sh); sx=(sw-m)/2; sy=(sh-m)/2; sw=sh=m; }
+      const k=Math.min(1, maxSide/Math.max(sw,sh)), c=document.createElement("canvas");
+      c.width=Math.round(sw*k); c.height=Math.round(sh*k);
+      c.getContext("2d").drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);
+      res(c.toDataURL("image/jpeg", square?0.85:0.72));
+    }; im.onerror=rej; im.src=fr.result; };
+    fr.onerror=rej; fr.readAsDataURL(file);
+  });
+}
+$("#avatarFile").addEventListener("change", async ev=>{ const file=ev.target.files[0]; ev.target.value=""; if(!file) return;
+  try{ const d=await readImage(file,320,true); if(putImg("avatar",d)){ paintAvatar(); toast("Profile photo updated."); } }catch{ toast("Couldn't read that photo. Try another one."); } });
+$("#avatarRemove").addEventListener("click",()=>{ putImg("avatar",""); paintAvatar(); });
+$("#bgFile").addEventListener("change", async ev=>{ const file=ev.target.files[0]; ev.target.value=""; if(!file) return;
+  try{ const d=await readImage(file,1280,false); if(putImg("bg",d)){ applyBg(); toast("Background updated."); } }catch{ toast("Couldn't read that photo. Try another one."); } });
+$("#bgRemove").addEventListener("click",()=>{ putImg("bg",""); applyBg(); });
+
+function fillProfile(){
+  const s=getSettings();
+  $("#uName").value=me.name; $("#uPhone").value=s.phone||""; $("#uEmail").value=s.email||""; $("#uTikTok").value=s.tiktok||""; $("#uThreads").value=s.threads||""; $("#uMsg").textContent="";
+}
+$("#uSave").addEventListener("click",()=>{
+  const name=$("#uName").value.trim(); if(!name){ $("#uMsg").textContent="Name can't be empty."; return; }
+  const acc=accounts(); if(Object.keys(acc).some(k=>k!==me.id && (acc[k].name||"").toLowerCase()===name.toLowerCase())){ $("#uMsg").textContent="Another agent on this phone has that name."; return; }
+  acc[me.id].name=name; saveAccounts(acc); me.name=name;
+  const s=getSettings(); s.phone=$("#uPhone").value.trim(); s.email=$("#uEmail").value.trim(); s.tiktok=$("#uTikTok").value.trim(); s.threads=$("#uThreads").value.trim(); putSettings(s);
+  $("#hello").textContent="Welcome, "+me.name; paintAvatar(); $("#uMsg").textContent="Saved.";
+  queueReg({type:"Profile update", id:me.id, name, phone:s.phone, email:s.email, tiktok:s.tiktok, threads:s.threads});
+});
+
+/* ---------- settings sheet ---------- */
+function openSettings(){ fillProfile(); renderThemes(); showUpdate(); $("#settings").hidden=false; $("#settings").scrollTop=0; }
+function closeSettings(){ $("#settings").hidden=true; }
+$("#gearBtn").addEventListener("click", openSettings);
+$("#meBtn").addEventListener("click", openSettings);
+$("#setBack").addEventListener("click", closeSettings);
+
+/* ---------- contact admin ---------- */
+let ctTopic="new";
+function setTopic(t){ ctTopic=t; document.querySelectorAll("#ctTopic button").forEach(b=>b.setAttribute("aria-checked", b.dataset.t===t)); $("#ctNew").hidden=t!=="new"; $("#ctIssue").hidden=t!=="issue"; }
+$("#ctTopic").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-t]"); if(b) setTopic(b.dataset.t); });
+$("#ctSend").addEventListener("click", async ()=>{
+  const who = me ? `${me.name} (ID: ${me.id})` : "Not logged in";
+  let msg;
+  if(ctTopic==="new"){
+    const n=$("#ctName").value.trim(), p=$("#ctPhone").value.trim();
+    if(!n){ toast("Type the new user's name."); return; }
+    msg=`Rak Affiliate: Request new user\nName: ${n}\nWhatsApp: ${p||"-"}\nRequested by: ${who}`;
+  } else {
+    const x=$("#ctText").value.trim(); if(!x){ toast("Describe the problem first."); return; }
+    msg=`Rak Affiliate: App issue\n${x}\nFrom: ${who}\nVersion: ${APP_VERSION} (${PLATFORM})`;
+  }
+  const ok=await copyText(msg);
+  openUrl(ADMIN_WA);
+  toast(ok?"Message copied. Paste it in WhatsApp and send.":"Opening WhatsApp. Type your message there.");
+});
+
 /* ---------- login ---------- */
 const MAX_TRIES=5, LOCK_MS=60000, IDLE_MS=15*60000;
 let authMode="login";
@@ -635,7 +887,7 @@ function failCount(n){ try{ if(n===undefined) return +localStorage.getItem("rak.
 function setAuthMode(m){
   authMode=m;
   const signup=m==="signup";
-  $("#aNameLabel").hidden=!signup;
+  $("#aNameLabel").hidden=!signup; $("#aPhoneLabel").hidden=!signup;
   $("#aIdText").textContent = signup ? "Agent ID" : "Agent ID or name";
   $("#aIdHint").textContent = signup ? "letters and numbers, no spaces" : "";
   $("#authBtn").textContent = signup ? "Create ID & start" : "Log in";
@@ -662,6 +914,9 @@ $("#authForm").addEventListener("submit",ev=>{
     acc[id]={name,pin:hashPin(id,pin),created:Date.now()};
     if(!saveAccounts(acc)) return authErr("Couldn't save on this phone. Storage may be full.");
     try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{}
+    const phone=$("#aPhone").value.trim();
+    try{ localStorage.setItem("rak.settings:"+id, JSON.stringify({phone})); }catch{}
+    queueReg({type:"New agent", id, name, phone, addedBy:"self"});
     return startSession(id, remember);
   }
   const left=lockLeft(); if(left) return authErr(`Too many wrong PINs. Try again in ${Math.ceil(left/1000)} seconds.`);
@@ -694,11 +949,12 @@ function startSession(id, remember){
   $("#acctInfo").textContent=`Logged in as ${me.name} (ID: ${me.id}). ${remembered?"You stay logged in on this phone.":"You'll be logged out when you close the app or after 15 minutes of no activity."}`;
   $("#auth").hidden=true; $("#app").hidden=false;
   $("#authForm").reset(); $("#aRemember").checked=true;
-  render(); renderSug(); syncSource(); showBioStatus(); bumpIdle();
+  applyAll(); render(); renderSug(); syncSource(); showBioStatus(); bumpIdle(); closeSettings();
+  loadConfig().then(()=>{ showUpdate(); flushRegs(); });
   window.scrollTo(0,0);
 }
 function showAuth(){
-  me=null; products=[]; $("#toast").hidden=true; clearTimeout(idleT);
+  me=null; products=[]; $("#toast").hidden=true; clearTimeout(idleT); closeSettings(); resetLook();
   $("#app").hidden=true; $("#auth").hidden=false;
   const ids=Object.keys(accounts());
   setAuthMode(ids.length ? "login" : "signup");
@@ -723,6 +979,7 @@ $("#nBtn").addEventListener("click",()=>{
   if(Object.keys(acc).some(k=>(acc[k].name||"").toLowerCase()===name.toLowerCase())) return acctMsg(false,"An agent with that name already exists. Use a different name.");
   if(!/^\d{4,8}$/.test(pin)) return acctMsg(false,"PIN must be 4 to 8 digits.");
   acc[id]={name,pin:hashPin(id,pin),created:Date.now(),addedBy:me.id}; saveAccounts(acc);
+  queueReg({type:"New agent", id, name, phone:"", addedBy:me.id});
   $("#nName").value=$("#nId").value=$("#nPin").value=""; acctMsg(true,`Added ${name}. To switch, tap Log out, then ${name} taps their name and enters their PIN.`);
 });
 let delArmed=false;
