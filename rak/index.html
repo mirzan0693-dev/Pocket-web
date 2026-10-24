@@ -99,7 +99,15 @@ button:disabled{opacity:.55;cursor:default}
 .auth{min-height:calc(100vh - 68px);display:grid;place-items:center}
 .auth-card{width:100%;max-width:420px;display:grid;gap:14px}
 .auth-card h1{font:800 clamp(32px,9vw,44px)/1.05 var(--display);margin:0;letter-spacing:-.02em}
-.auth-tabs{margin:4px 0 0}
+.who{display:flex;flex-wrap:wrap;gap:8px}
+.who button{font:600 14px var(--body);border-radius:99px;padding:8px 14px}
+.who button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.remember{display:flex;flex-direction:row;align-items:center;gap:10px;font-weight:500}
+.remember input{width:20px;height:20px;accent-color:var(--accent);padding:0}
+details.backup h4{font:600 14px var(--display);margin:16px 0 6px}
+.row3{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+@media (max-width:460px){.row3{grid-template-columns:1fr}}
+.msg.ok,.msg.err{margin-top:10px}
 details.backup{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
 details.backup summary{cursor:pointer;font-weight:600}
 details.backup .actions{margin-top:10px;align-items:center}
@@ -119,14 +127,16 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
   <div class="auth-card">
     <div class="eyebrow">Shopee &amp; TikTok affiliate</div>
     <h1>Rak Affiliate</h1>
-    <div class="plat auth-tabs" role="tablist"><button type="button" role="tab" data-mode="login" aria-selected="true">Log in</button><button type="button" role="tab" data-mode="signup" aria-selected="false">Create ID</button></div>
+    <p class="note" id="authLead"></p>
+    <div class="who" id="who"></div>
     <form id="authForm" autocomplete="off">
       <label for="aName" id="aNameLabel" hidden>Your name <span class="hint">shown as "Welcome, name"</span><input id="aName" maxlength="40" placeholder="e.g. Mirzan"></label>
-      <label for="aId">Agent ID <span class="hint">letters and numbers, no spaces</span><input id="aId" maxlength="24" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. mirzan01"></label>
-      <label for="aPin">PIN <span class="hint">4 to 8 digits</span><input id="aPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••"></label>
+      <label for="aId"><span id="aIdText">Agent ID or name</span> <span class="hint" id="aIdHint"></span><input id="aId" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. mirzan01"></label>
+      <label for="aPin">PIN <span class="hint" id="aPinHint">4 to 8 digits</span><input id="aPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••"></label>
+      <label class="remember" for="aRemember"><input type="checkbox" id="aRemember" checked> Remember me on this phone</label>
       <button class="primary" id="authBtn" type="submit">Log in</button>
       <div class="msg err" id="authMsg" hidden></div>
-      <p class="note" id="authNote">Your products are saved on this phone under your ID. Other agents on this phone can't see them.</p>
+      <p class="note">Your products are saved on this phone under your ID. Other agents on this phone can't see them.</p>
     </form>
   </div>
 </div>
@@ -194,6 +204,20 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
       <input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_...">
     </label>
     <p class="note">Make one at github.com/settings/personal-access-tokens/new: choose <b>Only select repositories → Pocket-web</b>, then <b>Repository permissions → Contents → Read and write</b>. Tap Generate and paste it here.</p>
+  </details>
+
+  <details class="backup" id="acctBox">
+    <summary>My account &amp; agents</summary>
+    <p class="note" id="acctInfo"></p>
+    <h4>Change PIN</h4>
+    <div class="row3"><input id="pinOld" type="password" inputmode="numeric" maxlength="8" placeholder="Current PIN" aria-label="Current PIN"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" aria-label="New PIN"><button type="button" id="pinBtn">Save PIN</button></div>
+    <h4>Add another agent on this phone</h4>
+    <p class="note">New IDs can only be created here by someone who is logged in. The login screen no longer has Create ID.</p>
+    <div class="row3"><input id="nName" maxlength="40" placeholder="Name" aria-label="New agent name"><input id="nId" maxlength="24" autocapitalize="none" placeholder="Agent ID" aria-label="New agent ID"><input id="nPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" aria-label="New agent PIN"></div>
+    <div class="actions"><button type="button" id="nBtn">Add agent</button></div>
+    <h4>Delete my ID</h4>
+    <div class="actions"><button type="button" class="del" id="delMeBtn">Delete my ID and products</button></div>
+    <div class="msg" id="acctMsg" hidden></div>
   </details>
 
   <details class="backup">
@@ -598,58 +622,121 @@ $("#pushBio").addEventListener("click", async ()=>{
 });
 
 /* ---------- login ---------- */
+const MAX_TRIES=5, LOCK_MS=60000, IDLE_MS=15*60000;
 let authMode="login";
+function findAccount(q){
+  const acc=accounts(), k=q.trim().toLowerCase();
+  if(acc[k]) return k;
+  const byName=Object.keys(acc).filter(id=>(acc[id].name||"").trim().toLowerCase()===k);
+  return byName.length===1 ? byName[0] : null;
+}
+function lockLeft(){ try{ const until=+localStorage.getItem("rak.lockUntil")||0; return Math.max(0,until-Date.now()); }catch{ return 0; } }
+function failCount(n){ try{ if(n===undefined) return +localStorage.getItem("rak.fails")||0; localStorage.setItem("rak.fails",String(n)); }catch{ return 0; } }
 function setAuthMode(m){
   authMode=m;
-  document.querySelectorAll(".auth-tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.mode===m));
-  $("#aNameLabel").hidden = m!=="signup";
-  $("#authBtn").textContent = m==="signup" ? "Create ID & start" : "Log in";
+  const signup=m==="signup";
+  $("#aNameLabel").hidden=!signup;
+  $("#aIdText").textContent = signup ? "Agent ID" : "Agent ID or name";
+  $("#aIdHint").textContent = signup ? "letters and numbers, no spaces" : "";
+  $("#authBtn").textContent = signup ? "Create ID & start" : "Log in";
+  $("#authLead").textContent = signup ? "First time on this phone. Create your agent ID to start." : "Welcome back. Tap your name or type your ID, then enter your PIN.";
+  const acc=accounts(), ids=Object.keys(acc);
+  $("#who").hidden = signup || !ids.length;
+  $("#who").innerHTML = ids.map(id=>`<button type="button" data-id="${esc(id)}" aria-pressed="false">${esc(acc[id].name||id)}</button>`).join("");
   $("#authMsg").hidden=true;
 }
-document.querySelector(".auth-tabs").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-mode]"); if(b) setAuthMode(b.dataset.mode); });
+$("#who").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-id]"); if(!b) return;
+  document.querySelectorAll("#who button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  $("#aId").value=b.dataset.id; $("#aPin").value=""; $("#aPin").focus(); });
 function authErr(t){ const m=$("#authMsg"); m.textContent=t; m.hidden=false; }
 $("#authForm").addEventListener("submit",ev=>{
   ev.preventDefault();
-  const id=$("#aId").value.trim().toLowerCase(), pin=$("#aPin").value.trim(), name=$("#aName").value.trim();
-  if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return authErr("Agent ID needs 3 to 24 letters or numbers, no spaces.");
+  const raw=$("#aId").value, pin=$("#aPin").value.trim(), name=$("#aName").value.trim(), remember=$("#aRemember").checked;
   if(!/^\d{4,8}$/.test(pin)) return authErr("PIN must be 4 to 8 digits.");
   const acc=accounts();
   if(authMode==="signup"){
+    const id=raw.trim().toLowerCase();
     if(!name) return authErr("Type your name.");
-    if(acc[id]) return authErr("That ID is already used on this phone. Log in instead, or pick another ID.");
-    const first = Object.keys(acc).length===0;
+    if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return authErr("Agent ID needs 3 to 24 letters or numbers, no spaces.");
+    if(Object.keys(acc).length) return authErr("This phone already has an agent. Ask them to add you from My account.");
     acc[id]={name,pin:hashPin(id,pin),created:Date.now()};
     if(!saveAccounts(acc)) return authErr("Couldn't save on this phone. Storage may be full.");
-    /* the first ID on a phone that already used the app keeps the existing products */
-    if(first){ try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{} }
-    startSession(id);
-  } else {
-    if(!acc[id]) return authErr("No agent ID \""+id+"\" on this phone. Tap Create ID to make one.");
-    if(acc[id].pin!==hashPin(id,pin)) return authErr("Wrong PIN. Try again.");
-    startSession(id);
+    try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{}
+    return startSession(id, remember);
   }
+  const left=lockLeft(); if(left) return authErr(`Too many wrong PINs. Try again in ${Math.ceil(left/1000)} seconds.`);
+  const id=findAccount(raw);
+  if(!id) return authErr(Object.keys(acc).length ? "That ID or name isn't on this phone. Tap your name above." : "No agent on this phone yet.");
+  if(acc[id].pin!==hashPin(id,pin)){
+    const n=failCount()+1; failCount(n);
+    if(n>=MAX_TRIES){ failCount(0); try{ localStorage.setItem("rak.lockUntil",String(Date.now()+LOCK_MS)); }catch{} return authErr("Too many wrong PINs. Locked for 60 seconds."); }
+    return authErr(`Wrong PIN. ${MAX_TRIES-n} tries left.`);
+  }
+  failCount(0);
+  startSession(id, remember);
 });
-function startSession(id){
+function setSession(id, remember){
+  try{ localStorage.removeItem("rak.session"); sessionStorage.removeItem("rak.session"); }catch{}
+  if(!id) return;
+  try{ (remember?localStorage:sessionStorage).setItem("rak.session",id); }catch{}
+}
+function getSession(){ try{ return localStorage.getItem("rak.session") || sessionStorage.getItem("rak.session"); }catch{ return null; } }
+let remembered=true, idleT=null;
+function bumpIdle(){ if(remembered||!me) return; clearTimeout(idleT); idleT=setTimeout(()=>{ logout(); toast("Logged out after 15 minutes of no activity."); }, IDLE_MS); }
+["click","keydown","touchstart","scroll"].forEach(e=>document.addEventListener(e,bumpIdle,{passive:true}));
+function startSession(id, remember){
   const acc=accounts(); if(!acc[id]) return showAuth();
-  me={id,name:acc[id].name};
-  try{ localStorage.setItem("rak.session",id); }catch{}
+  me={id,name:acc[id].name}; remembered=remember!==false;
+  setSession(id, remembered);
   products=loadMine(); migrateNums(); save();
   Object.keys(ui).forEach(k=>delete ui[k]); selected.clear();
   $("#hello").textContent="Welcome, "+me.name;
+  $("#acctInfo").textContent=`Logged in as ${me.name} (ID: ${me.id}). ${remembered?"You stay logged in on this phone.":"You'll be logged out when you close the app or after 15 minutes of no activity."}`;
   $("#auth").hidden=true; $("#app").hidden=false;
-  $("#authForm").reset();
-  render(); renderSug(); syncSource(); showBioStatus();
+  $("#authForm").reset(); $("#aRemember").checked=true;
+  render(); renderSug(); syncSource(); showBioStatus(); bumpIdle();
   window.scrollTo(0,0);
 }
 function showAuth(){
-  me=null; products=[]; $("#toast").hidden=true;
+  me=null; products=[]; $("#toast").hidden=true; clearTimeout(idleT);
   $("#app").hidden=true; $("#auth").hidden=false;
-  setAuthMode(Object.keys(accounts()).length ? "login" : "signup");
+  const ids=Object.keys(accounts());
+  setAuthMode(ids.length ? "login" : "signup");
+  if(ids.length===1){ $("#aId").value=ids[0]; document.querySelector("#who button")?.setAttribute("aria-pressed","true"); }
 }
-$("#logoutBtn").addEventListener("click",()=>{ try{ localStorage.removeItem("rak.session"); }catch{} showAuth(); });
+function logout(){ setSession(null); showAuth(); }
+$("#logoutBtn").addEventListener("click", logout);
+
+/* ---------- my account & agents ---------- */
+function acctMsg(ok,t){ const m=$("#acctMsg"); m.className="msg "+(ok?"ok":"err"); m.textContent=t; m.hidden=false; }
+$("#pinBtn").addEventListener("click",()=>{
+  const acc=accounts(), o=$("#pinOld").value.trim(), n=$("#pinNew").value.trim();
+  if(acc[me.id].pin!==hashPin(me.id,o)) return acctMsg(false,"Current PIN is wrong.");
+  if(!/^\d{4,8}$/.test(n)) return acctMsg(false,"New PIN must be 4 to 8 digits.");
+  acc[me.id].pin=hashPin(me.id,n); saveAccounts(acc); $("#pinOld").value=$("#pinNew").value=""; acctMsg(true,"PIN changed.");
+});
+$("#nBtn").addEventListener("click",()=>{
+  const acc=accounts(), name=$("#nName").value.trim(), id=$("#nId").value.trim().toLowerCase(), pin=$("#nPin").value.trim();
+  if(!name) return acctMsg(false,"Type the new agent's name.");
+  if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return acctMsg(false,"Agent ID needs 3 to 24 letters or numbers, no spaces.");
+  if(acc[id]) return acctMsg(false,"That ID is already used on this phone.");
+  if(Object.keys(acc).some(k=>(acc[k].name||"").toLowerCase()===name.toLowerCase())) return acctMsg(false,"An agent with that name already exists. Use a different name.");
+  if(!/^\d{4,8}$/.test(pin)) return acctMsg(false,"PIN must be 4 to 8 digits.");
+  acc[id]={name,pin:hashPin(id,pin),created:Date.now(),addedBy:me.id}; saveAccounts(acc);
+  $("#nName").value=$("#nId").value=$("#nPin").value=""; acctMsg(true,`Added ${name}. To switch, tap Log out, then ${name} taps their name and enters their PIN.`);
+});
+let delArmed=false;
+$("#delMeBtn").addEventListener("click",()=>{
+  if(!delArmed){ delArmed=true; $("#delMeBtn").textContent="Tap again to delete everything for "+me.id; setTimeout(()=>{ delArmed=false; $("#delMeBtn").textContent="Delete my ID and products"; },5000); return; }
+  const acc=accounts(); delete acc[me.id]; saveAccounts(acc);
+  try{ localStorage.removeItem(dataKey()); }catch{}
+  delArmed=false; $("#delMeBtn").textContent="Delete my ID and products"; logout();
+});
+
 (function boot(){
-  let id=null; try{ id=localStorage.getItem("rak.session"); }catch{}
-  if(id && accounts()[id]) startSession(id); else showAuth();
+  const id=getSession();
+  if(id && accounts()[id]) startSession(id, !!(function(){ try{ return localStorage.getItem("rak.session"); }catch{ return null; } })());
+  else showAuth();
 })();
 if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
