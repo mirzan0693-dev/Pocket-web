@@ -125,6 +125,29 @@ button:disabled{opacity:.55;cursor:default}
 #ctTopic button,.fonts button{border:0;border-radius:9px;padding:9px 6px;background:transparent;color:var(--muted)}
 body.has-bg{background-size:cover;background-position:center;background-attachment:fixed}
 .wrap{zoom:var(--zoom,1)}
+.auth-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.lang button{border:0;border-radius:0;padding:5px 12px;font:600 12px var(--mono);background:transparent;color:var(--muted)}
+.lang button[aria-pressed="true"],.lang2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lang2 button{border:0;border-radius:9px;padding:9px 6px;background:transparent;color:var(--muted)}
+.modes{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center}
+.modes button{background:transparent;border:0;color:var(--accent);font-weight:600;padding:4px}
+.lockscr{display:grid;place-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font:800 22px var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.adtabs{grid-template-columns:repeat(5,1fr);overflow-x:auto}
+.adtabs button{border:0;border-radius:9px;padding:9px 4px;background:transparent;color:var(--muted);font-size:13px;white-space:nowrap}
+.adtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.adpane{display:grid;gap:10px}
+.ag{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.ag-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ag b{font:600 15px var(--display);overflow-wrap:anywhere}
+.ag .sub{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.ag .actions button{font-size:13px;padding:7px 10px}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.muted{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .tour{position:fixed;inset:0;z-index:50}
 .tour-spot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.62);transition:all .25s ease;pointer-events:none;outline:2px solid var(--accent)}
 .tour-card{position:absolute;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));max-width:420px;margin:0 auto;background:var(--surface);color:var(--ink);border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);display:grid;gap:8px}
@@ -162,11 +185,12 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
 <body>
 <div class="auth" id="auth" hidden>
   <div class="auth-card">
-    <div class="eyebrow">Shopee &amp; TikTok affiliate</div>
-    <h1>Rak Affiliate</h1>
+    <div class="auth-top"><div class="eyebrow">Shopee &amp; TikTok affiliate</div><div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="ms">MY</button></div></div>
+    <h1 class="secret">Rak Affiliate</h1>
     <p class="note" id="authLead"></p>
     <div class="who" id="who"></div>
     <form id="authForm" autocomplete="off">
+      <label for="aCode" id="aCodeLabel" hidden>Invite code <span class="hint">from your admin's WhatsApp message</span><input id="aCode" maxlength="8" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="ABC123"></label>
       <label for="aName" id="aNameLabel" hidden>Your name <span class="hint">shown as "Welcome, name"</span><input id="aName" maxlength="40" placeholder="e.g. Mirzan"></label>
       <label for="aPhone" id="aPhoneLabel" hidden>WhatsApp number <span class="hint">for the admin's agent list</span><input id="aPhone" inputmode="tel" maxlength="20" placeholder="012-345 6789"></label>
       <label for="aId"><span id="aIdText">Agent ID or name</span> <span class="hint" id="aIdHint"></span><input id="aId" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. mirzan01"></label>
@@ -174,7 +198,8 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
       <label class="remember" for="aRemember"><input type="checkbox" id="aRemember" checked> Remember me on this phone</label>
       <button class="primary" id="authBtn" type="submit">Log in</button>
       <div class="msg err" id="authMsg" hidden></div>
-      <p class="note">Your products are saved on this phone under your ID. Other agents on this phone can't see them.</p>
+      <p class="note" id="authFoot">Your products are saved on this phone under your ID. Other agents on this phone can't see them.</p>
+      <div class="modes" id="authModes"></div>
     </form>
   </div>
 </div>
@@ -184,12 +209,14 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
       <button type="button" class="me" id="meBtn" aria-label="Open my profile"><span class="avatar" id="avatar"></span><span class="eyebrow" id="hello">Welcome</span></button>
       <div class="topicons">
         <button type="button" class="icon" id="bellBtn" aria-label="Updates"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8a2.5 2.5 0 0 0 2.4 2zm7-6V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="dot" id="bellDot" hidden></span></button>
+        <button type="button" class="icon" id="adminBtn" aria-label="Admin dashboard" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4z"/></svg></button>
         <button type="button" class="icon" id="helpBtn" aria-label="Tutorial"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 16h-2v-2h2zm2.1-7.8-.9.9c-.7.7-1.2 1.3-1.2 2.9h-2v-.5c0-1.1.5-2.1 1.2-2.8l1.2-1.3c.4-.3.6-.8.6-1.4a2 2 0 0 0-4 0H8a4 4 0 0 1 8 0c0 .9-.4 1.6-.9 2.2z"/></svg></button>
         <button type="button" class="icon" id="gearBtn" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
       </div>
     </div>
+    <div class="upd" id="expBanner" hidden><div><b>Your access ends soon</b><span id="expText"></span></div><button type="button" class="primary" id="expContact">Contact admin</button></div>
     <div class="upd" id="updBanner" hidden><div><b>New update available</b><span id="updText">Please contact admin to get the latest version.</span></div><button type="button" class="primary" id="updContact">Contact admin</button></div>
-    <h1>Rak Affiliate</h1>
+    <h1 class="secret">Rak Affiliate</h1>
     <p>Add a product and a Malay caption is written for you. Edit it, then post it to Threads or share it to Buffer.</p>
   </header>
 
@@ -282,8 +309,19 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     </section>
 
     <section class="set">
+      <h3>Language</h3>
+      <div class="plat lang2" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="ms">Bahasa Melayu</button></div>
+    </section>
+
+    <section class="set">
+      <h3>Cloud backup</h3>
+      <p class="note" id="bkInfo"></p>
+      <div class="actions"><button type="button" id="bkNow">Back up now</button></div>
+    </section>
+
+    <section class="set">
       <h3>Updates</h3>
-      <p class="note" id="verInfo"></p>
+      <p class="note secret2" id="verInfo"></p>
       <div class="actions"><button type="button" id="checkUpd">Check for updates</button><button type="button" id="tourBtn2">Show tutorial again</button></div>
     </section>
 
@@ -305,6 +343,80 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
     <div class="actions"><button type="button" class="del" id="delMeBtn">Delete my ID and products</button></div>
     <div class="msg" id="acctMsg" hidden></div>
       <div class="actions" style="margin-top:14px"><button type="button" id="logoutBtn">Log out</button></div>
+    </section>
+  </div>
+</div>
+<div class="sheet lockscr" id="lock" hidden>
+  <div class="wrap">
+    <h1 class="secret">Rak Affiliate</h1>
+    <section class="set">
+      <h3 id="lockTitle">Access needed</h3>
+      <p id="lockText" class="note"></p>
+      <div id="lockInvite" hidden>
+        <label for="lockCode">Invite code<input id="lockCode" maxlength="8" autocapitalize="characters" placeholder="ABC123"></label>
+        <div class="actions"><button type="button" class="primary" id="lockLink">Activate</button></div>
+      </div>
+      <div class="actions"><button type="button" class="primary" id="lockWa">Contact admin on WhatsApp</button><button type="button" id="lockRetry">Check again</button><button type="button" id="lockOut">Log out</button></div>
+      <div class="msg" id="lockMsg" hidden></div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="adminLogin" hidden>
+  <div class="wrap">
+    <div class="sheet-head"><button type="button" class="back" id="alBack" aria-label="Back">←</button><h2>Admin login</h2></div>
+    <section class="set">
+      <p class="note">For the owner and team admins only.</p>
+      <label for="alId">Email or admin ID<input id="alId" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
+      <label for="alCode">Admin code<input id="alCode" type="password" autocomplete="off"></label>
+      <div class="actions"><button type="button" class="primary" id="alGo">Unlock admin mode</button></div>
+      <div class="msg err" id="alMsg" hidden></div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="adminSheet" hidden>
+  <div class="wrap">
+    <div class="sheet-head"><button type="button" class="back" id="adBack" aria-label="Back">←</button><h2>Admin</h2><span class="pill queued" id="adRole"></span><span style="flex:1"></span><button type="button" id="adRefresh">Refresh</button></div>
+    <div class="stats" id="adStats"></div>
+    <div class="plat adtabs" id="adTabs" role="tablist"><button type="button" data-tab="agents">Agents</button><button type="button" data-tab="requests">Requests</button><button type="button" data-tab="invite">Invite</button><button type="button" data-tab="admins">Team admins</button><button type="button" data-tab="sheet">Sheet</button></div>
+    <div class="msg" id="adMsg" hidden></div>
+
+    <section class="adpane" data-pane="agents">
+      <div class="chips" id="agFilter"></div>
+      <input id="agSearch" placeholder="Search name, ID or number" aria-label="Search agents">
+      <div class="list" id="agList"></div>
+    </section>
+
+    <section class="adpane" data-pane="requests" hidden>
+      <div class="chips" id="rqFilter"></div>
+      <div class="list" id="rqList"></div>
+    </section>
+
+    <section class="adpane set" data-pane="invite" hidden>
+      <h3>Invite a new agent</h3>
+      <div class="row2"><label for="ivName">Name<input id="ivName" maxlength="40"></label><label for="ivPhone">WhatsApp number<input id="ivPhone" inputmode="tel" maxlength="20" placeholder="012-345 6789"></label></div>
+      <label for="ivMonths">Access length<select id="ivMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label>
+      <div class="actions"><button type="button" class="primary" id="ivGo">Create invite</button></div>
+      <div id="ivOut" hidden>
+        <textarea id="ivMsg" rows="9" aria-label="Invite message"></textarea>
+        <div class="actions"><button type="button" class="primary" id="ivWa">Send on WhatsApp</button><button type="button" id="ivCopy">Copy message</button><button type="button" id="ivWeb">Copy web link</button><button type="button" id="ivApk">Copy APK link</button></div>
+      </div>
+    </section>
+
+    <section class="adpane set" data-pane="admins" hidden>
+      <h3>Team admins</h3>
+      <p class="note">Team admins can invite agents, renew or lock their own agents, and handle their agents' requests. Only you can add or remove admins.</p>
+      <div class="row2"><label for="taName">Name<input id="taName" maxlength="40"></label><label for="taId">Admin ID<input id="taId" maxlength="24" autocapitalize="none" placeholder="e.g. aina.lead"></label></div>
+      <div class="row2"><label for="taPhone">WhatsApp number<input id="taPhone" inputmode="tel" maxlength="20"></label><label for="taCode">Their admin code<input id="taCode" maxlength="40" placeholder="at least 6 characters"></label></div>
+      <div class="actions"><button type="button" class="primary" id="taGo">Add team admin</button></div>
+      <div class="list" id="taList"></div>
+    </section>
+
+    <section class="adpane set" data-pane="sheet" hidden>
+      <h3>Google Sheet</h3>
+      <p class="note">Everything is also saved in your Google Sheet: a tab per month for new agents, plus Agents, Requests and Admins tabs. For an Excel file, open the sheet and choose File → Download → Microsoft Excel.</p>
+      <div class="actions"><button type="button" class="primary" id="openSheet">Open Google Sheet</button><button type="button" id="adExit">Exit admin mode</button></div>
     </section>
   </div>
 </div>
@@ -350,13 +462,13 @@ function migrateNums(){
   let n = products.reduce((m,p)=>Math.max(m,p.num||0),0);
   products.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(p=>{ if(!p.num) p.num=++n; });
 }
-function save(){ if(!me) return false; try{ localStorage.setItem(dataKey(), JSON.stringify(products)); return true; }catch{ toast("Couldn't save on this phone. Storage may be full."); return false; } }
+function save(){ if(!me) return false; try{ localStorage.setItem(dataKey(), JSON.stringify(products)); if(typeof scheduleBackup==="function") scheduleBackup(); return true; }catch{ toast("Couldn't save on this phone. Storage may be full."); return false; } }
 function sorted(){ return products.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
 function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 
 /* ---------- helpers ---------- */
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-let toastT; function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,2600); }
+let toastT; function toast(t){ const el=$("#toast"); el.textContent=(typeof L==="function"?L(t):t); el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,2600); }
 async function copyText(t){
   if(native && native.copy){ native.copy(t); return true; }
   try{ await navigator.clipboard.writeText(t); return true; }catch{ return false; }
@@ -674,7 +786,7 @@ function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
 
 
 /* ---------- app info, config, updates ---------- */
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 const CONFIG_URL = "https://mirzan0693-dev.github.io/Pocket-web/rak/config.json";
 const ADMIN_WA = "https://wa.me/qr/Y4V5FEAWS5UYO1";
 const PLATFORM = native ? "Android app" : "Web app";
@@ -835,6 +947,7 @@ $("#ctSend").addEventListener("click", async ()=>{
     const x=$("#ctText").value.trim(); if(!x){ toast("Describe the problem first."); return; }
     msg=`Rak Affiliate: App issue\n${x}\nFrom: ${who}\nVersion: ${APP_VERSION} (${PLATFORM})`;
   }
+  if(me) apiQuiet("request.log",{id:me.id,key:(myAcc().access||{}).key||"",name:me.name,type:ctTopic==="new"?"Request new user":"App issue",details:msg});
   const ok=await copyText(msg);
   openUrl(ADMIN_WA);
   toast(ok?"Message copied. Paste it in WhatsApp and send.":"Opening WhatsApp. Type your message there.");
@@ -879,6 +992,235 @@ $("#helpBtn").addEventListener("click", tourStart);
 $("#tourBtn2").addEventListener("click", tourStart);
 addEventListener("resize",()=>{ if(!$("#tour").hidden) tourShow(); });
 
+/* ---------- server (admin Google Sheet) ---------- */
+const WEB_URL = "https://mirzan0693-dev.github.io/Pocket-web/rak/";
+function apkUrl(){ return (config && config.apkUrl) || ""; }
+const ERRS = {bad_admin:"Wrong email/admin ID or admin code.", locked_out:"Too many wrong tries. Wait 10 minutes and try again.", bad_code:"That invite code isn't valid. Check the code from your admin.", code_used:"That invite code was already used. Ask your admin for a new one.", id_taken:"That agent ID is taken. Pick another one.", bad_id:"Agent ID needs 3 to 24 letters or numbers, no spaces.", not_yours:"That agent belongs to another team admin.", owner_only:"Only the owner can do this.", bad_login:"Agent ID or PIN is wrong.", not_found:"Not found. Tap Refresh.", name_required:"Type the name.", too_big:"Backup is too big.", not_allowed:"This phone isn't linked to that ID.", old_server:"The admin sheet needs the new script. Please contact admin.", server:"The admin sheet didn't answer properly. Try again later.", no_server:"The admin sheet isn't set up yet.", offline:"No internet connection. Try again."};
+function errText(e){ const c=(e&&e.message)||String(e); return ERRS[c]||("Something went wrong ("+c+")."); }
+async function api(action, payload){
+  if(!config || !config.sheetUrl) await loadConfig();
+  const url = config && config.sheetUrl; if(!url) throw new Error("no_server");
+  const body = JSON.stringify({action, ...payload, app:PLATFORM, version:APP_VERSION});
+  let text=null;
+  try{ const r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body,redirect:"follow"}); text=await r.text(); }
+  catch{ if(native && native.http){ const r=await http("POST",url,{"Content-Type":"text/plain;charset=utf-8"},body); if(r.status) text=r.text; } }
+  if(text==null) throw new Error("offline");
+  let j; try{ j=JSON.parse(text); }catch{ throw new Error("server"); }
+  if(!j.ok) throw new Error(j.error||"server");
+  if(!["request.log","backup.save","agent.lock","request.done","admin.add","admin.remove"].includes(action) && Object.keys(j).length<=1) throw new Error("old_server");
+  return j;
+}
+
+/* ---------- access (monthly) ---------- */
+const GRACE_MS = 3*864e5, WARN_MS = 3*864e5;
+function myAcc(){ return accounts()[me.id]||{}; }
+function setAccess(patch){ const a=accounts(); if(!a[me.id]) return; a[me.id].access={...(a[me.id].access||{}),...patch}; saveAccounts(a); }
+function adminInfo(){ try{ const a=JSON.parse(localStorage.getItem("rak.admin")||"null"); return a && me && a.agentId===me.id ? a : null; }catch{ return null; } }
+function fmtDate(iso){ try{ return new Date(iso).toLocaleDateString(lang==="ms"?"ms-MY":"en-MY",{day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kuala_Lumpur"}); }catch{ return iso||""; } }
+function showLock(mode, acc){
+  $("#lock").hidden=false;
+  $("#lockInvite").hidden = mode!=="invite";
+  $("#lockMsg").hidden=true;
+  if(mode==="invite"){ $("#lockTitle").textContent="Activate your access"; $("#lockText").textContent="This ID isn't linked to an active access yet. Enter the invite code your admin sent you, or contact admin to get one."; }
+  else if(mode==="locked"){ $("#lockTitle").textContent="Access paused"; $("#lockText").textContent="Your admin has paused your access. Please contact admin."; }
+  else { $("#lockTitle").textContent="Your access has expired"; $("#lockText").textContent=`Your access ended on ${fmtDate(acc&&acc.expires)}. Please contact admin to renew.`; }
+  $("#lock").dataset.mode=mode;
+}
+function hideLock(){ $("#lock").hidden=true; }
+function refreshAdminUi(){ const a=adminInfo(); $("#adminBtn").hidden=!a; }
+async function checkAccess(){
+  if(!me) return;
+  refreshAdminUi();
+  if(adminInfo()){ hideLock(); $("#expBanner").hidden=true; return; }
+  const acc=myAcc().access;
+  if(!acc || !acc.key){ showLock("invite"); return; }
+  try{
+    const r=await api("access.check",{id:me.id,key:acc.key});
+    if(r.status==="unknown"){ setAccess({key:""}); showLock("invite"); return; }
+    setAccess({status:r.status, expires:r.expires, checked:Date.now()});
+  }catch(e){ /* offline: use what we know */ }
+  const a=myAcc().access||{}, exp=new Date(a.expires).getTime()||0;
+  if(a.status==="locked") return showLock("locked");
+  if(a.status==="expired" || (exp && Date.now()>exp+((a.checked && Date.now()-a.checked<6e4)?0:GRACE_MS))) return showLock("expired", a);
+  hideLock();
+  const soon = exp && exp-Date.now()<WARN_MS;
+  $("#expBanner").hidden=!soon;
+  if(soon) $("#expText").textContent=`Your access ends on ${fmtDate(a.expires)}. Please contact admin to renew.`;
+}
+function renewRequest(){
+  const a=myAcc().access||{};
+  apiQuiet("request.log",{id:me.id,key:a.key||"",name:me.name,type:"Renew access",details:`Access ${a.expires?"ends/ended "+fmtDate(a.expires):"not active yet"}`});
+  copyText(`Rak Affiliate: Renew access\nName: ${me.name} (ID: ${me.id})`);
+  openUrl(ADMIN_WA);
+}
+function apiQuiet(action,payload){ api(action,payload).catch(()=>{}); }
+$("#lockWa").addEventListener("click", renewRequest);
+$("#expContact").addEventListener("click", renewRequest);
+$("#lockOut").addEventListener("click", ()=>{ hideLock(); logout(); });
+$("#lockRetry").addEventListener("click", async ()=>{ $("#lockMsg").className="msg"; $("#lockMsg").textContent="Checking…"; $("#lockMsg").hidden=false; await checkAccess(); if(!$("#lock").hidden){ $("#lockMsg").textContent="Still not active. Please contact admin."; } });
+$("#lockLink").addEventListener("click", async ()=>{
+  const code=$("#lockCode").value.trim().toUpperCase(), m=$("#lockMsg");
+  if(!code){ m.className="msg err"; m.textContent="Type the invite code."; m.hidden=false; return; }
+  const s=getSettings();
+  try{ const r=await api("invite.redeem",{code,id:me.id,name:me.name,phone:s.phone||"",email:s.email||"",pinHash:myAcc().pin});
+    setAccess({key:r.key,expires:r.expires,status:"active",checked:Date.now()}); $("#lockCode").value=""; await checkAccess(); toast("Access activated until "+fmtDate(r.expires)+".");
+  }catch(e){ m.className="msg err"; m.textContent=errText(e); m.hidden=false; }
+});
+
+/* ---------- cloud backup ---------- */
+let bkT=null;
+function scheduleBackup(){ clearTimeout(bkT); bkT=setTimeout(()=>backupNow(true), 20000); }
+async function backupNow(quiet){
+  if(!me) return;
+  const a=myAcc(); if(!a.access||!a.access.key){ if(!quiet) toast("Cloud backup starts once your access is active."); return; }
+  const s={...getSettings()};
+  const data=JSON.stringify({v:1, products, settings:s});
+  try{ const r=await api("backup.save",{id:me.id,key:a.access.key,data,pinHash:a.pin}); setAccess({backup:r.saved}); paintBackup(); if(!quiet) toast("Backed up."); }
+  catch(e){ if(!quiet) toast(errText(e)); }
+}
+function paintBackup(){ const b=me && (myAcc().access||{}).backup; $("#bkInfo").textContent = b ? `Last backup: ${new Date(b).toLocaleString(lang==="ms"?"ms-MY":"en-MY",{dateStyle:"medium",timeStyle:"short"})}. Your products back up automatically. On a new phone, choose "Restore my account" on the login screen.` : "Your products back up to the cloud automatically once your access is active. On a new phone, choose \"Restore my account\" on the login screen."; }
+$("#bkNow").addEventListener("click",()=>backupNow(false));
+
+/* ---------- hidden admin login: tap the title 5 times ---------- */
+let secretN=0, secretT=null;
+document.addEventListener("click",ev=>{
+  if(!ev.target.closest(".secret, .secret2")) return;
+  secretN++; clearTimeout(secretT); secretT=setTimeout(()=>secretN=0,1500);
+  if(secretN>=5){ secretN=0; if(!me){ toast("Log in to your agent ID first."); return; } $("#alMsg").hidden=true; $("#adminLogin").hidden=false; $("#alId").focus(); }
+});
+$("#alBack").addEventListener("click",()=>{ $("#adminLogin").hidden=true; });
+$("#alGo").addEventListener("click", async ()=>{
+  const id=$("#alId").value.trim().toLowerCase(), code=$("#alCode").value;
+  if(!id||!code){ $("#alMsg").textContent="Fill in both boxes."; $("#alMsg").hidden=false; return; }
+  $("#alGo").disabled=true;
+  try{ const r=await api("admin.login",{adminId:id,adminCode:code});
+    try{ localStorage.setItem("rak.admin",JSON.stringify({agentId:me.id,adminId:id,adminCode:code,role:r.role,name:r.name,sheetUrl:r.sheetUrl})); }catch{}
+    $("#alCode").value=""; $("#adminLogin").hidden=true; hideLock(); refreshAdminUi(); checkAccess(); openAdmin();
+    toast(r.role==="owner"?"Welcome, owner. Admin mode is on.":"Admin mode is on.");
+  }catch(e){ $("#alMsg").textContent=errText(e); $("#alMsg").hidden=false; }
+  finally{ $("#alGo").disabled=false; }
+});
+
+/* ---------- admin dashboard ---------- */
+let AD={agents:[],requests:[],admins:[],role:"",name:""}, adTab="agents", agF="all", rqF="Open";
+function adAuth(){ const a=adminInfo(); return a?{adminId:a.adminId,adminCode:a.adminCode}:{}; }
+function adMsg(ok,t){ const m=$("#adMsg"); if(!t){ m.hidden=true; return; } m.className="msg "+(ok?"ok":"err"); m.textContent=t; m.hidden=false; }
+function agStatus(a){ if(a.status==="active" && a.expires && new Date(a.expires)-Date.now()<7*864e5) return "expiring"; return a.status; }
+const ST_LABEL={active:["queued","Active"],expiring:["draft","Expiring"],expired:["bad","Expired"],locked:["bad","Locked"],invited:["muted","Invited"]};
+function openAdmin(){ closeSettings(); $("#adminSheet").hidden=false; setAdTab(adTab); loadAdmin(); }
+async function loadAdmin(){
+  adMsg(true,"Loading…");
+  try{ const r=await api("admin.list",adAuth()); AD=r; adMsg(true,""); paintAdmin(); $("#ivApk").hidden=!apkUrl();
+    const a=adminInfo(); if(a&&r.sheetUrl){ a.sheetUrl=r.sheetUrl; try{ localStorage.setItem("rak.admin",JSON.stringify(a)); }catch{} } }
+  catch(e){ adMsg(false,errText(e)); if(/bad_admin/.test(e.message)){ exitAdmin(); } }
+}
+function setAdTab(t){ adTab=t; document.querySelectorAll("#adTabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t)); document.querySelectorAll(".adpane").forEach(p=>p.hidden=p.dataset.pane!==t); }
+function paintAdmin(){
+  const owner=AD.role==="owner";
+  $("#adRole").textContent = owner ? "Owner" : "Team admin · "+(AD.name||"");
+  document.querySelector('#adTabs button[data-tab="admins"]').hidden=!owner;
+  const ag=AD.agents||[], now=Date.now(), ym=new Date().toISOString().slice(0,7);
+  const n={active:ag.filter(a=>agStatus(a)==="active").length, expiring:ag.filter(a=>agStatus(a)==="expiring").length, off:ag.filter(a=>a.status==="expired"||a.status==="locked").length, open:(AD.requests||[]).filter(r=>r.status!=="Done").length, joined:ag.filter(a=>(a.joined||"").slice(0,7)===ym).length};
+  $("#adStats").innerHTML=[["active","Active"],["expiring","Expiring (7 days)"],["off","Expired / locked"],["open","Open requests"],["joined","Joined this month"]].map(([k,l])=>`<div class="stat"><b>${n[k]}</b><span>${l}</span></div>`).join("");
+  paintAgents(); paintRequests(); paintAdmins();
+}
+function waLink(phone, text){ let d=String(phone||"").replace(/\D/g,""); if(!d) return ""; if(d.startsWith("0")) d="6"+d; return "https://wa.me/"+d+(text?"?text="+encodeURIComponent(text):""); }
+function paintAgents(){
+  const F=[["all","All"],["active","Active"],["expiring","Expiring"],["expired","Expired"],["invited","Invited"],["locked","Locked"]];
+  $("#agFilter").innerHTML=F.map(([k,l])=>`<button type="button" data-f="${k}" aria-selected="${k===agF}">${l}</button>`).join("");
+  const q=$("#agSearch").value.trim().toLowerCase();
+  const list=(AD.agents||[]).filter(a=>(agF==="all"||agStatus(a)===agF) && (!q || [a.name,a.id,a.phone].join(" ").toLowerCase().includes(q)));
+  $("#agList").innerHTML = list.length ? list.map(a=>{ const s=agStatus(a), [cls,lab]=ST_LABEL[s]||["muted",s], ref=a.id||a.code;
+    return `<div class="ag"><div class="ag-top"><div><b>${esc(a.name||"(no name)")}</b><div class="sub">${a.id?"ID: "+esc(a.id):"Invite code: "+esc(a.code)}${a.phone?" · "+esc(a.phone):""}${AD.role==="owner"&&a.admin?" · Admin: "+esc(a.admin):""}</div></div><span class="pill ${cls}">${lab}</span></div>
+    <div class="sub">${a.status==="invited"?"Not activated yet":"Access until "+esc(fmtDate(a.expires))}${a.seen?" · Last seen "+esc(fmtDate(a.seen)):""}</div>
+    <div class="actions"><button type="button" data-act="renew" data-ref="${esc(ref)}">Renew 1 month</button><button type="button" data-act="${a.status==="locked"?"unlock":"lock"}" data-ref="${esc(ref)}">${a.status==="locked"?"Unlock":"Lock"}</button>${a.phone?`<button type="button" data-act="wa" data-phone="${esc(a.phone)}">WhatsApp</button>`:""}${a.status==="invited"?`<button type="button" data-act="resend" data-ref="${esc(ref)}">Copy invite</button>`:""}</div></div>`; }).join("") : '<div class="empty">No agents here yet. Use the Invite tab to add one.</div>';
+}
+function paintRequests(){
+  $("#rqFilter").innerHTML=[["Open","Open"],["Done","Done"],["all","All"]].map(([k,l])=>`<button type="button" data-f="${k}" aria-selected="${k===rqF}">${l}</button>`).join("");
+  const list=(AD.requests||[]).filter(r=>rqF==="all"||(rqF==="Done"?r.status==="Done":r.status!=="Done"));
+  const phoneOf=id=>((AD.agents||[]).find(a=>a.id===id)||{}).phone;
+  $("#rqList").innerHTML = list.length ? list.map(r=>`<div class="ag"><div class="ag-top"><div><b>${esc(r.type)}</b><div class="sub">${esc(r.agentName||"")} ${r.agentId?"("+esc(r.agentId)+")":""} · ${esc(fmtDate(r.at))}</div></div><span class="pill ${r.status==="Done"?"queued":"draft"}">${r.status==="Done"?"Done":"Open"}</span></div>
+    ${r.details?`<div class="sub" style="white-space:pre-wrap">${esc(r.details)}</div>`:""}
+    <div class="actions"><button type="button" data-act="${r.status==="Done"?"reopen":"done"}" data-id="${esc(r.id)}">${r.status==="Done"?"Reopen":"Mark done"}</button>${phoneOf(r.agentId)?`<button type="button" data-act="wa" data-phone="${esc(phoneOf(r.agentId))}">WhatsApp</button>`:""}</div></div>`).join("") : '<div class="empty">No requests here.</div>';
+}
+function paintAdmins(){
+  $("#taList").innerHTML=(AD.admins||[]).length ? AD.admins.map(a=>`<div class="ag"><div class="ag-top"><div><b>${esc(a.name)}</b><div class="sub">Admin ID: ${esc(a.id)}${a.phone?" · "+esc(a.phone):""}</div></div><button type="button" class="del" data-act="rmadmin" data-id="${esc(a.id)}">Remove</button></div></div>`).join("") : '<div class="empty">No team admins yet.</div>';
+}
+function inviteText(name, code, months){
+  const apk=apkUrl();
+  return `Hi ${name}! Your Rak Affiliate access is ready 🎉\n\n📱 Open the app (iPhone & Android), then Add to Home Screen:\n${WEB_URL}\n${apk?`\n🤖 Android app (APK):\n${apk}\n`:""}\n🔑 Invite code: ${code}\n\nOpen the app → "New agent with invite code" → enter the code, create your agent ID and PIN.\nAccess: ${months} month${months>1?"s":""} from the day you activate.`;
+}
+async function adAction(fn, okText){ try{ await fn(); if(okText) toast(okText); await loadAdmin(); }catch(e){ adMsg(false,errText(e)); } }
+$("#adTabs").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-tab]"); if(b) setAdTab(b.dataset.tab); });
+$("#adBack").addEventListener("click",()=>{ $("#adminSheet").hidden=true; });
+$("#adRefresh").addEventListener("click", loadAdmin);
+$("#adminBtn").addEventListener("click", openAdmin);
+$("#agFilter").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-f]"); if(b){ agF=b.dataset.f; paintAgents(); } });
+$("#rqFilter").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-f]"); if(b){ rqF=b.dataset.f; paintRequests(); } });
+$("#agSearch").addEventListener("input", paintAgents);
+$("#agList").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-act]"); if(!b) return; const ref=b.dataset.ref;
+  if(b.dataset.act==="renew") return adAction(()=>api("agent.renew",{...adAuth(),ref,months:1}),"Renewed for 1 month.");
+  if(b.dataset.act==="lock") return adAction(()=>api("agent.lock",{...adAuth(),ref,locked:true}),"Locked.");
+  if(b.dataset.act==="unlock") return adAction(()=>api("agent.lock",{...adAuth(),ref,locked:false}),"Unlocked.");
+  if(b.dataset.act==="wa") return openUrl(waLink(b.dataset.phone));
+  if(b.dataset.act==="resend"){ const a=(AD.agents||[]).find(x=>x.code===ref); copyText(inviteText(a.name,a.code,1)).then(ok=>toast(ok?"Invite message copied.":"Couldn't copy.")); }
+});
+$("#rqList").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-act]"); if(!b) return;
+  if(b.dataset.act==="wa") return openUrl(waLink(b.dataset.phone));
+  adAction(()=>api("request.done",{...adAuth(),requestId:b.dataset.id,done:b.dataset.act==="done"}), b.dataset.act==="done"?"Marked done.":"Reopened.");
+});
+let lastInvite=null;
+$("#ivGo").addEventListener("click", async ()=>{
+  const name=$("#ivName").value.trim(), phone=$("#ivPhone").value.trim(), months=+$("#ivMonths").value;
+  if(!name) return adMsg(false,"Type the new agent's name.");
+  $("#ivGo").disabled=true;
+  try{ const r=await api("invite.create",{...adAuth(),name,phone,months}); lastInvite={name,phone,code:r.code,months};
+    $("#ivMsg").value=inviteText(name,r.code,months); $("#ivOut").hidden=false; adMsg(true,`Invite created. Code ${r.code}. Send the message to ${name}.`); loadAdmin(); }
+  catch(e){ adMsg(false,errText(e)); } finally{ $("#ivGo").disabled=false; }
+});
+$("#ivCopy").addEventListener("click", async ()=>toast(await copyText($("#ivMsg").value)?"Message copied.":"Couldn't copy."));
+$("#ivWa").addEventListener("click",()=>{ const u=lastInvite&&waLink(lastInvite.phone,$("#ivMsg").value); if(u) openUrl(u); else { copyText($("#ivMsg").value); toast("No number given. Message copied, paste it in WhatsApp."); openUrl("https://wa.me/?text="+encodeURIComponent($("#ivMsg").value)); } });
+$("#ivWeb").addEventListener("click", async ()=>toast(await copyText(WEB_URL)?"Web link copied.":"Couldn't copy."));
+$("#ivApk").addEventListener("click", async ()=>{ const u=apkUrl(); if(!u) return toast("The APK link isn't set up yet. Use the web link."); toast(await copyText(u)?"APK link copied.":"Couldn't copy."); });
+$("#taGo").addEventListener("click",()=>{ const name=$("#taName").value.trim(), id=$("#taId").value.trim().toLowerCase(), phone=$("#taPhone").value.trim(), code=$("#taCode").value;
+  if(!name||!id) return adMsg(false,"Type the admin's name and admin ID.");
+  if(code.length<6) return adMsg(false,"Their admin code needs at least 6 characters.");
+  adAction(async ()=>{ await api("admin.add",{...adAuth(),newId:id,newName:name,newPhone:phone,newCode:code}); ["#taName","#taId","#taPhone","#taCode"].forEach(s=>$(s).value=""); copyText(`Rak Affiliate team admin\nAdmin ID: ${id}\nAdmin code: ${code}\n\nTo open admin mode: log in to your agent ID, then tap the "Rak Affiliate" title 5 times.`); }, "Team admin added. Their login details are copied, send them privately.");
+});
+$("#taList").addEventListener("click",ev=>{ const b=ev.target.closest('button[data-act="rmadmin"]'); if(!b) return; adAction(()=>api("admin.remove",{...adAuth(),removeId:b.dataset.id}),"Team admin removed."); });
+$("#openSheet").addEventListener("click",()=>{ const a=adminInfo(); const u=(a&&a.sheetUrl)||AD.sheetUrl; if(u) openUrl(u); else toast("Tap Refresh first."); });
+function exitAdmin(){ try{ localStorage.removeItem("rak.admin"); }catch{} $("#adminSheet").hidden=true; refreshAdminUi(); checkAccess(); }
+$("#adExit").addEventListener("click", exitAdmin);
+
+/* ---------- language (EN / MY) ---------- */
+const I18N = {"Add a product and a Malay caption is written for you. Edit it, then post it to Threads or share it to Buffer.": "Tambah produk dan caption Bahasa Melayu ditulis untuk anda. Edit, kemudian post ke Threads atau kongsi ke Buffer.", "New update available": "Kemas kini baharu tersedia", "Contact admin": "Hubungi admin", "Your access ends soon": "Akses anda hampir tamat", "Product name": "Nama produk", "Price (RM)": "Harga (RM)", "Sold on": "Dijual di", "Shopee (affiliate link)": "Shopee (link affiliate)", "TikTok Shop (yellow basket, no link needed)": "TikTok Shop (keranjang kuning, tiada link)", "Affiliate link": "Link affiliate", "Shopee app → product → Share → Copy link": "App Shopee → produk → Kongsi → Salin link", "Features / notes": "Ciri / nota", "separate with commas, Malay works best": "asingkan dengan koma, lebih baik dalam Bahasa Melayu", "Caption style": "Gaya caption", "Casual & funny": "Santai & kelakar", "Honest, like a friend's review": "Jujur, macam review kawan", "Hype, \"you have to see this\"": "Hype, \"korang kena tengok ni\"", "Promo, budget & price": "Promo, bajet & harga", "Add & write caption": "Tambah & tulis caption", "Today's picks": "Pilihan hari ini", "↻ Shuffle": "↻ Tukar", "Use this": "Guna ini", "Open in Shopee": "Buka di Shopee", "Open in TikTok": "Buka di TikTok", "check price": "semak harga", "All": "Semua", "Home & Living": "Rumah & Kehidupan", "Furniture": "Perabot", "Home Decor": "Hiasan Rumah", "Kitchen & Dining": "Dapur & Makan", "Kitchen Storage": "Simpanan Dapur", "Home Improvement": "Baik Pulih Rumah", "Services & Installations": "Servis & Pemasangan", "Pet Supplies": "Barang Haiwan", "Stationery": "Alat Tulis", "Skincare": "Penjagaan Kulit", "Cases & Covers": "Casing & Sarung", "Components": "Komponen", "Motorcycles & Parts": "Motosikal & Alat Ganti", "Car Replacement Parts": "Alat Ganti Kereta", "Toys & Education": "Mainan & Pendidikan", "Jewellery": "Barang Kemas", "Others": "Lain-lain", "Products": "Produk", "Post to Threads": "Post ke Threads", "Share": "Kongsi", "Rewrite": "Tulis semula", "Copy": "Salin", "Delete": "Padam", "Yes, delete": "Ya, padam", "Draft": "Draf", "TikTok video plan & caption": "Plan video & caption TikTok", "Copy caption & open TikTok": "Salin caption & buka TikTok", "New idea": "Idea baharu", "Mark posted on TikTok": "Tanda sudah post di TikTok", "Unmark TikTok": "Batal tanda TikTok", "Clear": "Kosongkan", "Backup & restore": "Sandaran & pulih", "Share backup": "Kongsi sandaran", "Restore from backup": "Pulih dari sandaran", "No products yet": "Belum ada produk", "Settings": "Tetapan", "Profile": "Profil", "Change photo": "Tukar gambar", "Remove": "Buang", "Name": "Nama", "WhatsApp number": "Nombor WhatsApp", "Email": "Emel", "Save profile": "Simpan profil", "Saved.": "Disimpan.", "Theme": "Tema", "Your own background": "Latar belakang sendiri", "Pick a photo from your gallery. Cards stay solid so text is easy to read.": "Pilih gambar dari galeri. Kad kekal padu supaya teks senang dibaca.", "Upload from gallery": "Muat naik dari galeri", "Remove background": "Buang latar belakang", "Font size": "Saiz tulisan", "Small": "Kecil", "Normal": "Biasa", "Large": "Besar", "Extra large": "Sangat besar", "Language": "Bahasa", "Cloud backup": "Sandaran awan", "Back up now": "Sandar sekarang", "Updates": "Kemas kini", "Check for updates": "Semak kemas kini", "Show tutorial again": "Tunjuk tutorial semula", "Contact admin on WhatsApp": "Hubungi admin di WhatsApp", "Request new user": "Mohon pengguna baharu", "App issue": "Masalah app", "New user's name": "Nama pengguna baharu", "Their WhatsApp number": "Nombor WhatsApp mereka", "What's wrong?": "Apa masalahnya?", "Choose what you need. Your message is copied and WhatsApp opens. Paste it in the chat and send.": "Pilih apa yang anda perlukan. Mesej akan disalin dan WhatsApp dibuka. Tampal dalam chat dan hantar.", "Account": "Akaun", "Change PIN": "Tukar PIN", "Save PIN": "Simpan PIN", "Delete my ID": "Padam ID saya", "Delete my ID and products": "Padam ID dan produk saya", "Log out": "Log keluar", "Shopee & TikTok affiliate": "Affiliate Shopee & TikTok", "Agent ID or name": "ID ejen atau nama", "Agent ID": "ID ejen", "Your name": "Nama anda", "Invite code": "Kod jemputan", "from your admin's WhatsApp message": "dari mesej WhatsApp admin anda", "4 to 8 digits": "4 hingga 8 digit", "letters and numbers, no spaces": "huruf dan nombor, tanpa ruang", "Remember me on this phone": "Ingat saya di telefon ini", "Log in": "Log masuk", "Activate & start": "Aktifkan & mula", "Restore my account": "Pulihkan akaun saya", "New agent with invite code": "Ejen baharu dengan kod jemputan", "Welcome back. Tap your name or type your ID, then enter your PIN.": "Selamat kembali. Tekan nama anda atau taip ID, kemudian masukkan PIN.", "New agent? Enter the invite code from your admin, then create your agent ID and PIN.": "Ejen baharu? Masukkan kod jemputan dari admin, kemudian cipta ID ejen dan PIN.", "New phone? Enter your agent ID and PIN to bring back your account and products.": "Telefon baharu? Masukkan ID ejen dan PIN untuk pulihkan akaun dan produk anda.", "Your products are saved on this phone under your ID. Other agents on this phone can't see them.": "Produk anda disimpan di telefon ini bawah ID anda. Ejen lain di telefon ini tak boleh lihat.", "shown as \"Welcome, name\"": "dipaparkan sebagai \"Selamat datang, nama\"", "for the admin's agent list": "untuk senarai ejen admin", "Activate your access": "Aktifkan akses anda", "Access paused": "Akses digantung", "Your access has expired": "Akses anda telah tamat", "Activate": "Aktifkan", "Check again": "Semak semula", "This ID isn't linked to an active access yet. Enter the invite code your admin sent you, or contact admin to get one.": "ID ini belum dipautkan dengan akses aktif. Masukkan kod jemputan dari admin, atau hubungi admin untuk dapatkannya.", "Your admin has paused your access. Please contact admin.": "Admin telah menggantung akses anda. Sila hubungi admin.", "Skip": "Langkau", "Back": "Kembali", "Next": "Seterusnya", "Done": "Selesai", "Welcome to Rak Affiliate": "Selamat datang ke Rak Affiliate", "1. Add a product": "1. Tambah produk", "2. Today's picks": "2. Pilihan hari ini", "3. Categories": "3. Kategori", "4. Your products": "4. Produk anda", "5. TikTok plan": "5. Plan TikTok", "6. Make it yours": "6. Jadikan milik anda", "This is your home. Tap your photo or ⚙ for Settings, 🔔 for updates, and ? to see this tutorial again.": "Ini laman utama anda. Tekan gambar anda atau ⚙ untuk Tetapan, 🔔 untuk kemas kini, dan ? untuk tengok tutorial ini semula.", "Type the product name and price, choose Shopee or TikTok Shop, and paste your affiliate link (Shopee app → product → Share → Copy link). Tap Add & write caption.": "Taip nama produk dan harga, pilih Shopee atau TikTok Shop, dan tampal link affiliate (App Shopee → produk → Kongsi → Salin link). Tekan Tambah & tulis caption.", "No idea what to sell? Pick Shopee or TikTok Shop here. You get 5 trending picks a day, and Shuffle shows others.": "Tak tahu nak jual apa? Pilih Shopee atau TikTok Shop di sini. Anda dapat 5 pilihan trending sehari, dan Tukar tunjuk yang lain.", "Swipe the categories. All shows everything. Tap Open in Shopee or Open in TikTok to find a pick, then Use this to fill the form.": "Leret kategori. Semua tunjuk semuanya. Tekan Buka di Shopee atau Buka di TikTok untuk cari, kemudian Guna ini untuk isi borang.", "Each product gets a Malay caption you can edit. Post to Threads opens Threads with it ready. Share sends it to Buffer, WhatsApp or any app. Rewrite gives a new caption.": "Setiap produk dapat caption Bahasa Melayu yang boleh diedit. Post ke Threads buka Threads dengan caption sedia. Kongsi hantar ke Buffer, WhatsApp atau app lain. Tulis semula beri caption baharu.", "Open this under any product for a shot-by-shot video plan and a TikTok caption with hashtags. Mark it posted when you're done.": "Buka ini di bawah mana-mana produk untuk plan video babak demi babak dan caption TikTok dengan hashtag. Tanda sudah post bila siap.", "In Settings you can add your photo and details, change the theme or background, make text bigger, and contact admin for help or a new user.": "Dalam Tetapan anda boleh tambah gambar dan butiran, tukar tema atau latar belakang, besarkan tulisan, dan hubungi admin untuk bantuan atau pengguna baharu.", "Caption copied.": "Caption disalin.", "Message copied. Paste it in WhatsApp and send.": "Mesej disalin. Tampal di WhatsApp dan hantar.", "Backed up.": "Sudah disandar.", "Wrong PIN. Try again.": "PIN salah. Cuba lagi.", "PIN must be 4 to 8 digits.": "PIN mesti 4 hingga 8 digit.", "Type your name.": "Taip nama anda.", "That invite code isn't valid. Check the code from your admin.": "Kod jemputan tak sah. Semak kod dari admin anda.", "No internet connection. Try again.": "Tiada sambungan internet. Cuba lagi.", "That ID or name isn't on this phone. Tap your name above.": "ID atau nama itu tiada di telefon ini. Tekan nama anda di atas.", "Added. Caption is ready below.": "Ditambah. Caption sedia di bawah.", "Opened Threads. Check it there and tap Post.": "Threads dibuka. Semak di sana dan tekan Post.", "Pick Buffer to queue it, or any app you like.": "Pilih Buffer untuk masuk barisan, atau mana-mana app.", "No new updates. You're on the latest version.": "Tiada kemas kini baharu. Anda guna versi terkini."};
+const I18N_P = [["^Welcome, (.+)$", "Selamat datang, $1"], ["^(\\d+) of (\\d+)$", "$1 daripada $2"], ["^Step (\\d+) of (\\d+)$", "Langkah $1 daripada $2"], ["^(\\d+) / 500 characters$", "$1 / 500 aksara"], ["^(\\d+) products?$", "$1 produk"], ["^Your access ended on (.+)\\. Please contact admin to renew\\.$", "Akses anda tamat pada $1. Sila hubungi admin untuk sambung."], ["^Your access ends on (.+)\\. Please contact admin to renew\\.$", "Akses anda tamat pada $1. Sila hubungi admin untuk sambung."], ["^Version (\\d+) is ready(.*)\\. Please contact admin to get it\\.$", "Versi $1 sudah sedia$2. Sila hubungi admin untuk dapatkannya."], ["^Access activated until (.+)\\.$", "Akses diaktifkan sehingga $1."], ["^Wrong PIN\\. (\\d+) tries left\\.$", "PIN salah. Tinggal $1 cubaan."]].map(([a,b])=>[new RegExp(a),b]);
+const I18N_R = Object.fromEntries(Object.entries(I18N).map(([k,v])=>[v,k]));
+let lang = "en"; try{ lang = localStorage.getItem("rak.lang")==="ms" ? "ms" : "en"; }catch{}
+function trText(s){
+  const core=s.trim(); if(!core) return s;
+  let out=null;
+  if(lang==="ms"){ out=I18N[core]; if(!out){ for(const [re,rep] of I18N_P){ if(re.test(core)){ out=core.replace(re,rep); break; } } } }
+  else { out=I18N_R[core]; }
+  return out ? s.replace(core,out) : s;
+}
+function trNode(root){
+  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>{ const p=n.parentNode; return p && !/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.nodeName) && !p.closest("[data-noi18n]") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }});
+  const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n=>{ const v=trText(n.nodeValue); if(v!==n.nodeValue) n.nodeValue=v; });
+  if(root.querySelectorAll) root.querySelectorAll("[placeholder],[aria-label]").forEach(el=>{ ["placeholder","aria-label"].forEach(a=>{ const v=el.getAttribute(a); if(v){ const x=trText(v); if(x!==v) el.setAttribute(a,x); } }); });
+}
+let trBusy=false;
+const trObs=new MutationObserver(muts=>{ if(trBusy) return; trBusy=true; try{ muts.forEach(m=>{ m.addedNodes.forEach(n=>{ if(n.nodeType===1) trNode(n); else if(n.nodeType===3){ const v=trText(n.nodeValue); if(v!==n.nodeValue) n.nodeValue=v; } }); if(m.type==="characterData"){ const v=trText(m.target.nodeValue); if(v!==m.target.nodeValue) m.target.nodeValue=v; } }); } finally { trBusy=false; } });
+function setLang(l){
+  lang = l==="ms" ? "ms" : "en"; try{ localStorage.setItem("rak.lang",lang); }catch{}
+  document.documentElement.lang = lang==="ms" ? "ms" : "en";
+  document.querySelectorAll("[data-lang]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.lang===lang));
+  trBusy=true; try{ trNode(document.body); } finally { trBusy=false; }
+}
+document.addEventListener("click",ev=>{ const b=ev.target.closest("button[data-lang]"); if(b) setLang(b.dataset.lang); });
+function L(s){ return trText(s); }
+
 /* ---------- login ---------- */
 const MAX_TRIES=5, LOCK_MS=60000, IDLE_MS=15*60000;
 let authMode="login";
@@ -892,38 +1234,59 @@ function lockLeft(){ try{ const until=+localStorage.getItem("rak.lockUntil")||0;
 function failCount(n){ try{ if(n===undefined) return +localStorage.getItem("rak.fails")||0; localStorage.setItem("rak.fails",String(n)); }catch{ return 0; } }
 function setAuthMode(m){
   authMode=m;
-  const signup=m==="signup";
-  $("#aNameLabel").hidden=!signup; $("#aPhoneLabel").hidden=!signup;
-  $("#aIdText").textContent = signup ? "Agent ID" : "Agent ID or name";
+  const signup=m==="signup", restore=m==="restore";
+  $("#aCodeLabel").hidden=!signup; $("#aNameLabel").hidden=!signup; $("#aPhoneLabel").hidden=!signup;
+  $("#aIdText").textContent = (signup||restore) ? "Agent ID" : "Agent ID or name";
   $("#aIdHint").textContent = signup ? "letters and numbers, no spaces" : "";
-  $("#authBtn").textContent = signup ? "Create ID & start" : "Log in";
-  $("#authLead").textContent = signup ? "First time on this phone. Create your agent ID to start." : "Welcome back. Tap your name or type your ID, then enter your PIN.";
+  $("#authBtn").textContent = signup ? "Activate & start" : restore ? "Restore my account" : "Log in";
+  $("#authLead").textContent = signup ? "New agent? Enter the invite code from your admin, then create your agent ID and PIN." : restore ? "New phone? Enter your agent ID and PIN to bring back your account and products." : "Welcome back. Tap your name or type your ID, then enter your PIN.";
+  $("#authFoot").hidden = m!=="login";
   const acc=accounts(), ids=Object.keys(acc);
-  $("#who").hidden = signup || !ids.length;
+  $("#who").hidden = m!=="login" || !ids.length;
   $("#who").innerHTML = ids.map(id=>`<button type="button" data-id="${esc(id)}" aria-pressed="false">${esc(acc[id].name||id)}</button>`).join("");
+  const links=[];
+  if(m!=="login" && ids.length) links.push(["login","Log in"]);
+  if(m!=="signup") links.push(["signup","New agent with invite code"]);
+  if(m!=="restore") links.push(["restore","Restore my account"]);
+  $("#authModes").innerHTML=links.map(([k,l])=>`<button type="button" data-mode="${k}">${l}</button>`).join("");
   $("#authMsg").hidden=true;
 }
+$("#authModes").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-mode]"); if(b){ setAuthMode(b.dataset.mode); } });
 $("#who").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-id]"); if(!b) return;
   document.querySelectorAll("#who button").forEach(x=>x.setAttribute("aria-pressed", x===b));
   $("#aId").value=b.dataset.id; $("#aPin").value=""; $("#aPin").focus(); });
 function authErr(t){ const m=$("#authMsg"); m.textContent=t; m.hidden=false; }
-$("#authForm").addEventListener("submit",ev=>{
+$("#authForm").addEventListener("submit",async ev=>{
   ev.preventDefault();
   const raw=$("#aId").value, pin=$("#aPin").value.trim(), name=$("#aName").value.trim(), remember=$("#aRemember").checked;
   if(!/^\d{4,8}$/.test(pin)) return authErr("PIN must be 4 to 8 digits.");
   const acc=accounts();
-  if(authMode==="signup"){
+  if(authMode==="signup" || authMode==="restore"){
     const id=raw.trim().toLowerCase();
-    if(!name) return authErr("Type your name.");
     if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return authErr("Agent ID needs 3 to 24 letters or numbers, no spaces.");
-    if(Object.keys(acc).length) return authErr("This phone already has an agent ID. Ask the admin for help from Settings → Contact admin.");
-    acc[id]={name,pin:hashPin(id,pin),created:Date.now()};
-    if(!saveAccounts(acc)) return authErr("Couldn't save on this phone. Storage may be full.");
-    try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{}
-    const phone=$("#aPhone").value.trim();
-    try{ localStorage.setItem("rak.settings:"+id, JSON.stringify({phone})); }catch{}
-    queueReg({type:"New agent", id, name, phone, addedBy:"self"});
-    return startSession(id, remember);
+    if(acc[id]) return authErr("That ID is already on this phone. Use Log in instead.");
+    const btn=$("#authBtn"); btn.disabled=true; $("#authMsg").hidden=true;
+    try{
+      if(authMode==="signup"){
+        const code=$("#aCode").value.trim().toUpperCase(), phone=$("#aPhone").value.trim();
+        if(!code) throw new Error("bad_code");
+        if(!name) { authErr("Type your name."); return; }
+        const r=await api("invite.redeem",{code,id,name,phone,pinHash:hashPin(id,pin)});
+        acc[id]={name,pin:hashPin(id,pin),created:Date.now(),access:{key:r.key,expires:r.expires,status:"active",checked:Date.now()}};
+        if(!saveAccounts(acc)) { authErr("Couldn't save on this phone. Storage may be full."); return; }
+        try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy && Object.keys(acc).length===1){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{}
+        try{ localStorage.setItem("rak.settings:"+id, JSON.stringify({phone})); }catch{}
+      } else {
+        const r=await api("backup.load",{id,pinHash:hashPin(id,pin)});
+        acc[id]={name:r.name||id,pin:hashPin(id,pin),created:Date.now(),access:{key:r.key,expires:r.expires,status:r.status,checked:Date.now()}};
+        if(!saveAccounts(acc)) { authErr("Couldn't save on this phone. Storage may be full."); return; }
+        if(r.data){ try{ const d=JSON.parse(r.data); localStorage.setItem("rak.products.v1:"+id, JSON.stringify(d.products||[])); localStorage.setItem("rak.settings:"+id, JSON.stringify(d.settings||{phone:r.phone||""})); }catch{} }
+        toast("Account restored.");
+      }
+      startSession(id, remember);
+    }catch(e){ authErr(errText(e)); }
+    finally{ btn.disabled=false; }
+    return;
   }
   const left=lockLeft(); if(left) return authErr(`Too many wrong PINs. Try again in ${Math.ceil(left/1000)} seconds.`);
   const id=findAccount(raw);
@@ -956,12 +1319,13 @@ function startSession(id, remember){
   $("#auth").hidden=true; $("#app").hidden=false;
   $("#authForm").reset(); $("#aRemember").checked=true;
   applyAll(); render(); renderSug(); syncSource(); bumpIdle(); closeSettings();
-  loadConfig().then(()=>{ showUpdate(); flushRegs(); });
-  if(!getSettings().tourDone) setTimeout(tourStart, 400);
+  loadConfig().then(()=>{ showUpdate(); flushRegs(); checkAccess(); });
+  refreshAdminUi(); paintBackup();
+  if(!getSettings().tourDone) setTimeout(()=>{ if($("#lock").hidden) tourStart(); }, 1200);
   window.scrollTo(0,0);
 }
 function showAuth(){
-  me=null; products=[]; $("#toast").hidden=true; $("#tour").hidden=true; clearTimeout(idleT); closeSettings(); resetLook();
+  me=null; products=[]; $("#toast").hidden=true; $("#tour").hidden=true; ["#lock","#adminSheet","#adminLogin"].forEach(s=>$(s).hidden=true); $("#expBanner").hidden=true; clearTimeout(idleT); closeSettings(); resetLook();
   $("#app").hidden=true; $("#auth").hidden=false;
   const ids=Object.keys(accounts());
   setAuthMode(ids.length ? "login" : "signup");
@@ -986,6 +1350,9 @@ $("#delMeBtn").addEventListener("click",()=>{
   delArmed=false; $("#delMeBtn").textContent="Delete my ID and products"; logout();
 });
 
+setLang(lang); trObs.observe(document.body,{childList:true,subtree:true,characterData:true});
+setInterval(()=>{ if(me) checkAccess(); }, 6*3600*1000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && me) checkAccess(); });
 (function boot(){
   const id=getSession();
   if(id && accounts()[id]) startSession(id, !!(function(){ try{ return localStorage.getItem("rak.session"); }catch{ return null; } })());
