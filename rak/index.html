@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Rak Affiliate Threads</title>
+<title>Rak Affiliate</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="theme-color" content="#e2552b">
@@ -94,6 +94,12 @@ button:disabled{opacity:.55;cursor:default}
 .chips button{font:600 12.5px var(--body);padding:6px 12px;border-radius:99px}
 .chips button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:14px;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.hello{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.logout{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+.auth{min-height:calc(100vh - 68px);display:grid;place-items:center}
+.auth-card{width:100%;max-width:420px;display:grid;gap:14px}
+.auth-card h1{font:800 clamp(32px,9vw,44px)/1.05 var(--display);margin:0;letter-spacing:-.02em}
+.auth-tabs{margin:4px 0 0}
 details.backup{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
 details.backup summary{cursor:pointer;font-weight:600}
 details.backup .actions{margin-top:10px;align-items:center}
@@ -109,10 +115,25 @@ details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="auth" id="auth" hidden>
+  <div class="auth-card">
+    <div class="eyebrow">Shopee &amp; TikTok affiliate</div>
+    <h1>Rak Affiliate</h1>
+    <div class="plat auth-tabs" role="tablist"><button type="button" role="tab" data-mode="login" aria-selected="true">Log in</button><button type="button" role="tab" data-mode="signup" aria-selected="false">Create ID</button></div>
+    <form id="authForm" autocomplete="off">
+      <label for="aName" id="aNameLabel" hidden>Your name <span class="hint">shown as "Welcome, name"</span><input id="aName" maxlength="40" placeholder="e.g. Mirzan"></label>
+      <label for="aId">Agent ID <span class="hint">letters and numbers, no spaces</span><input id="aId" maxlength="24" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. mirzan01"></label>
+      <label for="aPin">PIN <span class="hint">4 to 8 digits</span><input id="aPin" type="password" inputmode="numeric" maxlength="8" placeholder="••••"></label>
+      <button class="primary" id="authBtn" type="submit">Log in</button>
+      <div class="msg err" id="authMsg" hidden></div>
+      <p class="note" id="authNote">Your products are saved on this phone under your ID. Other agents on this phone can't see them.</p>
+    </form>
+  </div>
+</div>
+<div class="wrap" id="app" hidden>
   <header>
-    <div class="eyebrow">Shopee Affiliate → Threads @ijanmadu</div>
-    <h1>Rak Affiliate Threads</h1>
+    <div class="eyebrow hello"><span id="hello">Welcome</span><button type="button" class="logout" id="logoutBtn">Log out</button></div>
+    <h1>Rak Affiliate</h1>
     <p>Add a product and a Malay caption is written for you. Edit it, then post it to Threads or share it to Buffer.</p>
   </header>
 
@@ -195,24 +216,28 @@ const ui = {}; const selected = new Set();
 const native = window.Android || null;
 
 /* ---------- storage (on this phone) ---------- */
-const KEY = "rak.products.v1";
-function load(){
-  try{
-    const raw = localStorage.getItem(KEY);
-    if(raw) return JSON.parse(raw);
-  }catch{}
-  return SEED_PRODUCTS.slice();
+/* ---------- agent accounts (on this phone) ---------- */
+const LEGACY_KEY = "rak.products.v1";
+let me = null;            // {id, name}
+let products = [];
+function hashPin(id,pin){ let h1=0xdeadbeef, h2=0x41c6ce57; const s="rak|"+id+"|"+pin;
+  for(let i=0;i<s.length;i++){ const c=s.charCodeAt(i); h1=Math.imul(h1^c,2654435761); h2=Math.imul(h2^c,1597334677); }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(36); }
+function accounts(){ try{ return JSON.parse(localStorage.getItem("rak.accounts")||"{}"); }catch{ return {}; } }
+function saveAccounts(a){ try{ localStorage.setItem("rak.accounts",JSON.stringify(a)); return true; }catch{ return false; } }
+function dataKey(){ return "rak.products.v1:"+me.id; }
+function loadMine(){
+  try{ const raw=localStorage.getItem(dataKey()); if(raw) return JSON.parse(raw); }catch{}
+  return [];
 }
-let products = load();
-/* give every product a number (older installs had none); keep the seed numbers so they match the bio page */
-(function migrate(){
+function migrateNums(){
   const seedNum = {}; SEED_PRODUCTS.forEach(p=>seedNum[p.id]=p.num);
   products.forEach(p=>{ if(!p.num && seedNum[p.id]) p.num=seedNum[p.id]; if(!p.source) p.source="shopee"; });
   let n = products.reduce((m,p)=>Math.max(m,p.num||0),0);
   products.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(p=>{ if(!p.num) p.num=++n; });
-})();
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(products)); return true; }catch{ toast("Couldn't save on this phone. Storage may be full."); return false; } }
-save();
+}
+function save(){ if(!me) return false; try{ localStorage.setItem(dataKey(), JSON.stringify(products)); return true; }catch{ toast("Couldn't save on this phone. Storage may be full."); return false; } }
 function sorted(){ return products.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
 function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 
@@ -572,7 +597,60 @@ $("#pushBio").addEventListener("click", async ()=>{
   } finally { btn.disabled=false; }
 });
 
-render(); renderSug(); syncSource();
+/* ---------- login ---------- */
+let authMode="login";
+function setAuthMode(m){
+  authMode=m;
+  document.querySelectorAll(".auth-tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.mode===m));
+  $("#aNameLabel").hidden = m!=="signup";
+  $("#authBtn").textContent = m==="signup" ? "Create ID & start" : "Log in";
+  $("#authMsg").hidden=true;
+}
+document.querySelector(".auth-tabs").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-mode]"); if(b) setAuthMode(b.dataset.mode); });
+function authErr(t){ const m=$("#authMsg"); m.textContent=t; m.hidden=false; }
+$("#authForm").addEventListener("submit",ev=>{
+  ev.preventDefault();
+  const id=$("#aId").value.trim().toLowerCase(), pin=$("#aPin").value.trim(), name=$("#aName").value.trim();
+  if(!/^[a-z0-9_.-]{3,24}$/.test(id)) return authErr("Agent ID needs 3 to 24 letters or numbers, no spaces.");
+  if(!/^\d{4,8}$/.test(pin)) return authErr("PIN must be 4 to 8 digits.");
+  const acc=accounts();
+  if(authMode==="signup"){
+    if(!name) return authErr("Type your name.");
+    if(acc[id]) return authErr("That ID is already used on this phone. Log in instead, or pick another ID.");
+    const first = Object.keys(acc).length===0;
+    acc[id]={name,pin:hashPin(id,pin),created:Date.now()};
+    if(!saveAccounts(acc)) return authErr("Couldn't save on this phone. Storage may be full.");
+    /* the first ID on a phone that already used the app keeps the existing products */
+    if(first){ try{ const legacy=localStorage.getItem(LEGACY_KEY); if(legacy){ localStorage.setItem("rak.products.v1:"+id, legacy); localStorage.removeItem(LEGACY_KEY); } }catch{} }
+    startSession(id);
+  } else {
+    if(!acc[id]) return authErr("No agent ID \""+id+"\" on this phone. Tap Create ID to make one.");
+    if(acc[id].pin!==hashPin(id,pin)) return authErr("Wrong PIN. Try again.");
+    startSession(id);
+  }
+});
+function startSession(id){
+  const acc=accounts(); if(!acc[id]) return showAuth();
+  me={id,name:acc[id].name};
+  try{ localStorage.setItem("rak.session",id); }catch{}
+  products=loadMine(); migrateNums(); save();
+  Object.keys(ui).forEach(k=>delete ui[k]); selected.clear();
+  $("#hello").textContent="Welcome, "+me.name;
+  $("#auth").hidden=true; $("#app").hidden=false;
+  $("#authForm").reset();
+  render(); renderSug(); syncSource(); showBioStatus();
+  window.scrollTo(0,0);
+}
+function showAuth(){
+  me=null; products=[]; $("#toast").hidden=true;
+  $("#app").hidden=true; $("#auth").hidden=false;
+  setAuthMode(Object.keys(accounts()).length ? "login" : "signup");
+}
+$("#logoutBtn").addEventListener("click",()=>{ try{ localStorage.removeItem("rak.session"); }catch{} showAuth(); });
+(function boot(){
+  let id=null; try{ id=localStorage.getItem("rak.session"); }catch{}
+  if(id && accounts()[id]) startSession(id); else showAuth();
+})();
 if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
