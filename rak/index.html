@@ -333,16 +333,16 @@ function renderSug(){
   const fresh = pool.filter(s=>!added.has(key(s.name,s.source)));
   const isTT = sugPlat==="tiktok";
   $("#sugNote").innerHTML = isTT
-    ? "Selling well on TikTok Shop. Tap <b>Copy for TikTok</b>, open TikTok → <b>Shop</b>, paste into search, then <b>Add to showcase</b>. Then tap <b>Use this</b>. No link needed."
-    : "Trending, low-price picks. A new set every day. Tap <b>Copy for Shopee</b>, search it in the Shopee app, copy your affiliate link, then tap <b>Use this</b> and paste the link.";
+    ? "Selling well on TikTok Shop. Tap <b>Open in TikTok</b>, go to the <b>Shop</b> tab in the results, open the product and tap <b>Add to showcase</b>. Then tap <b>Use this</b>. No link needed."
+    : "Trending, low-price picks. A new set every day. Tap <b>Open in Shopee</b>, pick a listing, tap Share → Copy link, then tap <b>Use this</b> and paste the link.";
   const shown = pickToday(fresh.length>=PER_DAY?fresh:pool);
   $("#sugCount").textContent = shown.length+" of "+pool.length;
   $("#shuffleBtn").hidden = pool.length<=PER_DAY;
   el.innerHTML = shown.map(s=>`<div class="sug ${added.has(key(s.name,s.source))?"used":""}">
     <div><b>${esc(s.name)}</b>${s.price?`<span class="sprice">~RM ${esc(s.price)}</span>`:'<span class="sprice">check price</span>'}</div>
     <div class="why">${esc(s.why)}</div>
-    <div class="sbtns"><button type="button" data-sug="${esc(s.id)}">Use this</button><button type="button" class="copyq" data-sid="${esc(s.id)}" data-q="${esc(s.search||s.name)}">${s.source==="tiktok"?"Copy for TikTok":"Copy for Shopee"}</button></div>
-    ${copied===s.id?`<div class="why" style="grid-column:1 / -1;color:var(--good)">Copied. Open ${s.source==="tiktok"?"TikTok → Shop":"the Shopee app"} and paste it into search.</div>`:""}
+    <div class="sbtns"><button type="button" data-sug="${esc(s.id)}">Use this</button><button type="button" class="copyq" data-sid="${esc(s.id)}" data-q="${esc(s.search||s.name)}" data-plat="${esc(s.platform||"shopee")}">${s.platform==="tiktok"?"Open in TikTok":"Open in Shopee"}</button></div>
+    ${copied===s.id?`<div class="why" style="grid-column:1 / -1;color:var(--good)">Opened ${s.platform==="tiktok"?"TikTok":"Shopee"}. If the search box is empty, paste: the product name is copied.</div>`:""}
   </div>`).join("");
 }
 $("#shuffleBtn").addEventListener("click",()=>{ salt++; copied=""; try{localStorage.setItem("shuffle",JSON.stringify({day:todayKey(),salt}));}catch{} renderSug(); });
@@ -350,7 +350,12 @@ $("#sugCats").addEventListener("click",ev=>{const b=ev.target.closest("button[da
 $("#sugPlat").addEventListener("click",ev=>{const b=ev.target.closest("button[data-plat]"); if(!b) return; sugPlat=b.dataset.plat; copied=""; saveView(); renderSug(); requestAnimationFrame(()=>document.querySelector('#sugCats button[aria-selected="true"]')?.scrollIntoView({inline:"center",block:"nearest"}));});
 $("#sugList").addEventListener("click",async ev=>{
   const c=ev.target.closest("button.copyq");
-  if(c){ if(await copyText(c.dataset.q)){ copied=c.dataset.sid; renderSug(); } else { c.textContent=c.dataset.q; } return; }
+  if(c){
+    const q=encodeURIComponent(c.dataset.q);
+    await copyText(c.dataset.q);
+    openUrl(c.dataset.plat==="tiktok" ? "https://www.tiktok.com/search?q="+q : "https://shopee.com.my/search?keyword="+q);
+    copied=c.dataset.sid; renderSug(); return;
+  }
   const b=ev.target.closest("button[data-sug]"); if(!b) return;
   const s=SUGGESTIONS.find(x=>x.id===b.dataset.sug); if(!s) return;
   $("#fName").value=s.name; $("#fPrice").value=s.price||""; $("#fNotes").value=s.notes||""; $("#fStyle").value=s.style||"santai";
