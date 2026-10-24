@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rak Affiliate Threads</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#e2552b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rak Affiliate">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column: add-product form, today's picks, product rack (each card a caption workbench) */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#18241f; --muted:#5d6b64; --line:#dde3dd;
+  --accent:#e2552b; --accent-ink:#ffffff; --accent-soft:#fbe6dd;
+  --good:#1f7a4d; --good-soft:#dcf0e4; --warn:#9a6400; --warn-soft:#f8ecd2; --bad:#b3261e; --bad-soft:#f8dedb;
+  --display:"Bricolage Grotesque", "Segoe UI", Roboto, system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "Roboto Mono", monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111815; --surface:#19221e; --ink:#e8eee9; --muted:#9aa8a1; --line:#2b3732;
+  --accent:#ff7a4d; --accent-ink:#1a0f0a; --accent-soft:#3a2219;
+  --good:#6fd39e; --good-soft:#173528; --warn:#e8b75a; --warn-soft:#3a2d12; --bad:#ff8a80; --bad-soft:#3d1c1a; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header h1{font:800 clamp(28px,7vw,38px)/1.05 var(--display);margin:0;letter-spacing:-.02em}
+header p{margin:8px 0 0;color:var(--muted);max-width:52ch}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px}
+.row{display:grid;grid-template-columns:1fr 130px;gap:12px}
+@media (max-width:460px){.row{grid-template-columns:1fr}}
+label{display:grid;gap:5px;font-weight:600;font-size:13px}
+label span.hint{font-weight:400;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;min-width:0}
+textarea{resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 14px var(--body);border-radius:9px;padding:10px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button:disabled{opacity:.55;cursor:default}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.rack-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.rack-head h2{font:600 20px var(--display);margin:0}
+.count{font:500 12px var(--mono);color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;min-width:0}
+.card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card h3{margin:0;font:600 17px/1.3 var(--display);overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted)}
+.meta a{color:var(--muted);overflow-wrap:anywhere}
+.price{font:500 13px var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.pill{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:99px;white-space:nowrap}
+.pill.draft{background:var(--warn-soft);color:var(--warn)}
+.pill.queued{background:var(--good-soft);color:var(--good)}
+.caption{min-height:150px;line-height:1.55}
+.cap-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font:500 12px var(--mono);color:var(--muted)}
+.over{color:var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.actions .del{margin-left:auto;color:var(--bad)}
+.msg{font-size:13px;padding:8px 10px;border-radius:8px}
+.msg.ok{background:var(--good-soft);color:var(--good)}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:26px 18px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font:600 16px var(--display);margin-bottom:4px}
+.note{font-size:12.5px;color:var(--muted)}
+.pick{display:flex;gap:10px;align-items:flex-start;cursor:pointer;min-width:0}
+.pick input{width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:var(--accent);padding:0}
+.bulk{position:sticky;bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.bulk span{font-weight:600}
+.bulk .ghost{background:transparent;color:var(--bg);border-color:transparent}
+.sug-list{display:grid;gap:8px}
+.sug{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.sug b{font:600 15px/1.3 var(--display);overflow-wrap:anywhere}
+.sug .why{grid-column:1;font-size:13px;color:var(--muted)}
+.sug .sbtns{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sug .sbtns button{font:600 13px var(--body);padding:7px 10px;text-align:center;border-radius:8px}
+.sug .sbtns .copyq{color:var(--accent)}
+.sug .sprice{font:500 12px var(--mono);color:var(--ink);margin-left:6px}
+.sug.used{opacity:.55}
+.shuffle{font:600 13px var(--body);padding:6px 12px;border-radius:99px;color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{font:600 12.5px var(--body);padding:6px 12px;border-radius:99px}
+.chips button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:14px;z-index:20;max-width:calc(100% - 32px);text-align:center}
+details.backup{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+details.backup summary{cursor:pointer;font-weight:600}
+details.backup .actions{margin-top:10px;align-items:center}
+.biolink{font:500 12.5px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere;flex:1 1 220px;min-width:0}
+.num{font:800 13px var(--mono);color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 7px;margin-right:6px;white-space:nowrap}
+.pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pill.off{background:transparent;color:var(--muted);border:1px solid var(--line)}
+details.tt{border-top:1px dashed var(--line);padding-top:10px}
+details.tt summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.plan{white-space:pre-wrap;font-size:13.5px;line-height:1.55;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin:10px 0}
+.ttcap{min-height:110px}
+.src{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Shopee Affiliate → Threads @ijanmadu</div>
+    <h1>Rak Affiliate Threads</h1>
+    <p>Add a product and a Malay caption is written for you. Edit it, then post it to Threads or share it to Buffer.</p>
+  </header>
+
+  <form id="addForm" autocomplete="off">
+    <div class="row">
+      <label for="fName">Product name
+        <input id="fName" required maxlength="160" placeholder="e.g. Portable mini fan, 3 speeds">
+      </label>
+      <label for="fPrice">Price (RM)
+        <input id="fPrice" inputmode="decimal" placeholder="29.90">
+      </label>
+    </div>
+    <label for="fSource">Sold on
+      <select id="fSource">
+        <option value="shopee">Shopee (affiliate link, goes on your bio page)</option>
+        <option value="tiktok">TikTok Shop (yellow basket, no link needed)</option>
+      </select>
+    </label>
+    <label for="fLink" id="linkLabel">Affiliate link <span class="hint">Shopee app → product → Share → Copy link</span>
+      <input id="fLink" type="url" placeholder="https://s.shopee.com.my/...">
+    </label>
+    <label for="fNotes">Features / notes <span class="hint">separate with commas, Malay works best</span>
+      <textarea id="fNotes" rows="2" maxlength="600" placeholder="Senyap, cas USB-C, tahan 8 jam, sesuai bawa ke office"></textarea>
+    </label>
+    <label for="fStyle">Caption style
+      <select id="fStyle">
+        <option value="santai">Casual & funny</option>
+        <option value="review">Honest, like a friend's review</option>
+        <option value="hype">Hype, "you have to see this"</option>
+        <option value="promo">Promo, budget & price</option>
+      </select>
+    </label>
+    <button class="primary" id="addBtn" type="submit">Add & write caption</button>
+    <div id="formMsg" class="msg err" hidden></div>
+  </form>
+
+  <section>
+    <div class="rack-head"><h2>Today's picks</h2><div style="display:flex;gap:10px;align-items:center"><span class="count" id="sugCount"></span><button type="button" id="shuffleBtn" class="shuffle">↻ Shuffle</button></div></div>
+    <p class="note" id="sugNote" style="margin:4px 0 10px"></p>
+    <div class="chips" id="sugCats" role="tablist" aria-label="Category"></div>
+    <div class="sug-list" id="sugList"></div>
+  </section>
+
+  <section>
+    <div class="rack-head"><h2>Products</h2><span class="count" id="count"></span></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <div class="bulk" id="bulkBar" hidden><span id="bulkTxt"></span><div class="actions"><button type="button" class="ghost" id="bulkClear">Clear</button><button type="button" class="primary" id="bulkNext">Post next</button></div></div>
+
+  <details class="backup" id="bioBox">
+    <summary>Link-in-bio page</summary>
+    <p class="note">Put this link in your TikTok and Threads bio. It lists every Shopee product with its number, so captions can say "Produk #12, link dalam bio".</p>
+    <div class="actions"><code class="biolink" id="bioLink"></code><button type="button" id="copyBio">Copy link</button><button type="button" id="openBio">Open</button></div>
+    <div class="actions"><button type="button" class="primary" id="pushBio">Update bio page</button><span class="note" id="bioStatus"></span></div>
+    <label for="ghToken" style="margin-top:10px">GitHub access key <span class="hint">needed once, saved on this phone only</span>
+      <input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_...">
+    </label>
+    <p class="note">Make one at github.com/settings/personal-access-tokens/new: choose <b>Only select repositories → Pocket-web</b>, then <b>Repository permissions → Contents → Read and write</b>. Tap Generate and paste it here.</p>
+  </details>
+
+  <details class="backup">
+    <summary>Backup &amp; restore</summary>
+    <p class="note">Products are saved on this phone only. Uninstalling the app deletes them, so share a backup to WhatsApp or Drive now and then.</p>
+    <div class="actions"><button type="button" id="backupBtn">Share backup</button><button type="button" id="restoreBtn">Restore from backup</button></div>
+    <textarea id="restoreBox" rows="4" placeholder="Paste a backup here, then tap Restore again" hidden></textarea>
+  </details>
+
+  <p class="note">Captions are capped at 500 characters (the Threads limit). <b>Post to Threads</b> opens Threads with the caption filled in. <b>Share</b> lets you pick Buffer, WhatsApp or any other app.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SEED_PRODUCTS = [{"id": "f52hi6f6v5mmay941psx", "caption": "Sape lagi masak nasi guna periuk besar padahal makan sorang je? 😅\n\nNi mini rice cooker 1.8L, memang muat untuk orang bujang atau korang yang duduk rumah sewa. Non-stick, so nasi tak melekat dan senang nak basuh. Saiz kecil, tak makan tempat.\n\nRM17.98 je. Murah gila 🍚\n\n🛒 https://s.shopee.com.my/1BNK1rwm5g", "createdAt": 1792695800977, "link": "https://s.shopee.com.my/1BNK1rwm5g", "name": "Mini electric rice cooker 1.8L non-stick", "notes": "1.8L, non-stick, kecil sesuai bujang atau rumah sewa", "price": "17.98", "status": "draft", "style": "santai", "num": 1}, {"id": "akfedf5x0wvl7jbcjav3", "caption": "Korang pernah tak sapu lantai, lepas tu kena mop lagi sekali? Penat kan 😩\n\nVacuum ni wireless, so senang nak bawa ke mana-mana.\nAda pad mop sekali.\nSedut habuk dan lap lantai sekali jalan je!\n\nHarga RM35.95 je. Jangan sampai habis baru menyesal 👀\n\n🛒 https://s.shopee.com.my/2LZHQAbREu", "createdAt": 1792695929210, "link": "https://s.shopee.com.my/2LZHQAbREu", "name": "Cordless vacuum cleaner with mop pad", "notes": "Wireless, ada pad mop, sedut habuk dan lap lantai sekali jalan", "price": "35.95", "status": "draft", "style": "hype", "num": 2}, {"id": "8e2v8l0dr1c4yych3t1n", "caption": "Nak smoothie tapi malas bawa blender besar? 🥤\nBlender portable ni boleh cas guna USB-C, saiz 450ml, sesuai untuk buat smoothie kat office atau gym.\nRingan je nak bawa, senang nak guna bila-bila masa.\nHarga RM15.19 je, tapi harga dan stok boleh berubah, so check dulu sebelum kehabisan.\n\n🛒 https://s.shopee.com.my/30oyDdlGUg", "createdAt": 1792696149845, "link": "https://s.shopee.com.my/30oyDdlGUg", "name": "Portable USB-C blender 450ml", "notes": "Boleh cas USB-C, 450ml, buat smoothie di office atau gym", "price": "15.19", "status": "draft", "style": "promo", "num": 3}, {"id": "keco40qgknzjjwivmg8l", "caption": "Siapa lagi malas nak angkat baldi tiap kali nak mop rumah? 🙋\n\nMop spray 360 darjah ni tak payah baldi langsung. Spray, lap, siap. Bawah sofa yang selalu kena skip tu pun senang je nak capai.\n\nHarga RM33.20 je. Rumah bersih, tulang belakang pun selamat 😂\n\n🛒 https://s.shopee.com.my/6VOqOOPJOk", "createdAt": 1792696473781, "link": "https://s.shopee.com.my/6VOqOOPJOk", "name": "360° spray mop", "notes": "Mop spray 360 darjah, tak payah baldi, senang lap bawah sofa", "price": "33.20", "status": "draft", "style": "santai", "num": 4}, {"id": "ynm6a2iky2gv7bcod0kq", "caption": "Tisu dalam rumah cepat habis tapi tak tahu nak letak mana? 🤔\nTisu gantung 4 lapis ni dapat 9 pek, boleh gantung tepi dinding jadi jimat ruang meja & kabinet.\nHarga RM9.89 je untuk 9 pek.\nHarga & stok boleh berubah bila-bila masa, so kalau stok rumah dah nak habis, check sekarang 🛒\n\n🛒 https://s.shopee.com.my/5fpjP2SRNZ", "createdAt": 1792696576558, "link": "https://s.shopee.com.my/5fpjP2SRNZ", "name": "Hanging facial tissue 4-ply (9 packs)", "notes": "Tisu gantung 4 lapis, 9 pek, gantung tepi dinding jimat ruang", "price": "9.89", "status": "draft", "style": "promo", "num": 5}, {"id": "rh51s9cfvmeg3ogwdzax", "caption": "Rumah berbau lembap bila balik kerja? Korang kena tengok ni 😭\n\nDiffuser ni bagi rumah sentiasa wangi. Sesuai untuk ruang tamu, sesuai juga untuk bilik tidur.\n\nMasuk rumah terus rasa tenang, tetamu datang pun confident.\n\nHarga RM 22.19 je. Jangan tunggu stok habis baru nak menyesal ✨\n\n🛒 https://s.shopee.com.my/2VshdR7tNw", "createdAt": 1792696770504, "link": "https://s.shopee.com.my/2VshdR7tNw", "name": "Home fragrance diffuser", "notes": "Bagi rumah sentiasa wangi, sesuai ruang tamu dan bilik", "price": "22.19", "status": "draft", "style": "hype", "num": 6}, {"id": "ibuo7v22uuvulc5176og", "caption": "Malam-malam nyamuk dengung kat telinga, siapa yang tak stress? 😤\n\nNi perangkap nyamuk lampu UV, boleh bawa ke mana-mana. Ada pemegang, so senang je gantung kat balkoni. Tak payah dah duduk sambil tampar kaki sendiri.\n\nHarga RM8.33 je. Lagi murah dari kopi kat cafe 😂\n\n🛒 https://s.shopee.com.my/1W0ARhigC0", "createdAt": 1792696858944, "link": "https://s.shopee.com.my/1W0ARhigC0", "name": "Portable LED mosquito trap", "notes": "Perangkap nyamuk lampu UV, ada pemegang untuk gantung, sesuai balkoni", "price": "8.33", "status": "draft", "style": "santai", "num": 7}, {"id": "6pnlbedd1defvotm9ykt", "caption": "Sudut rumah kau pun kosong je kan? Selama ni aku biarkan je, rugi betul.\n\nRak sudut 4 tingkat ni muat letak barang tanpa makan banyak ruang. Ada ruang terbuka untuk display, ada ruang tertutup untuk sorok barang yang bersepah. Nampak kemas, sudut yang selalu kosong pun jadi berguna 🙌\n\n🛒 https://s.shopee.com.my/4B0vcpPR2n", "createdAt": 1792697055617, "link": "https://s.shopee.com.my/4B0vcpPR2n", "name": "4-tier corner shelf", "notes": "Rak sudut 4 tingkat, ada ruang terbuka dan tertutup, guna sudut yang selalu kosong", "price": "", "status": "draft", "style": "review", "num": 8}, {"id": "op5l7q2g86bbmqq7fmgj", "caption": "Bilik berselerak, ruang tamu pun macam stor? Aku pun pernah kena 😅\n\nKabinet simpanan ni ada corak bunga, so nampak comel, tak macam kabinet biasa yang boring.\n\nAda beberapa saiz (50-70cm), jadi senang pilih ikut ruang. Boleh letak dalam bilik atau ruang tamu, barang terus nampak kemas.\n\nHarga RM 112.50 je.\n\n🛒 https://s.shopee.com.my/8AX4OJAkzY", "createdAt": 1792697177753, "link": "https://s.shopee.com.my/8AX4OJAkzY", "name": "Storage cabinet 50-70cm", "notes": "Kabinet simpanan bercorak bunga, beberapa saiz, kemas barang bilik dan ruang tamu", "price": "112.50", "status": "draft", "style": "review", "num": 9}, {"id": "ck0c1oybt9mod82z4a34", "caption": "Rumah kecil tapi nak setup WFH? Meja ni jawapannya 😅\n\nMeja lipat, boleh lipat simpan bila tak guna, so tak makan ruang.\nAda roda, senang nak alih ikut mana-mana sudut rumah.\nRangka besi, tahan sampai 150kg. Memang rasa kukuh bila kerja lama-lama.\n\nSesuai untuk WFH atau study 💻\n\n🛒 https://s.shopee.com.my/9zyiZslKLK", "createdAt": 1792697363083, "link": "https://s.shopee.com.my/9zyiZslKLK", "name": "Foldable study desk with wheels", "notes": "Meja lipat ada roda, rangka besi, tahan 150kg, sesuai WFH", "price": "", "queuedAt": 1792697568026, "status": "queued", "style": "review", "num": 10}, {"id": "h9kfj7vamizgda37bz6c", "caption": "Tisu cepat habis, tapi dompet pun cepat kosong? 😅\nTisu gantung 5 lapis ni tebal dan lembut, senang nak guna bila-bila masa.\nSatu set ada 6 pek besar, tak payah beli selalu.\nHarga RM26.18 je sekarang. Harga dan stok boleh berubah bila-bila, so kalau berminat, jangan tunggu lama 🛒\n\n🛒 https://s.shopee.com.my/60ScQklwQh", "createdAt": 1792839076615, "link": "https://s.shopee.com.my/60ScQklwQh", "name": "5-ply hanging tissue (6 packs)", "notes": "Tisu gantung 5 lapis, 6 pek besar, tebal dan lembut", "price": "26.18", "status": "draft", "style": "promo", "num": 11}];
+const SUGGESTIONS = [{"cat": "Home & Living", "name": "Cordless vacuum cleaner with mop pad", "notes": "Wireless, ada pad mop, sedut habuk dan lap lantai sekali jalan", "price": "35.95", "rank": 1, "search": "cordless vacuum mop pad", "style": "hype", "why": "#2 home appliance on TikTok MY by 7-day orders; 175K+ sold", "id": "s01"}, {"cat": "Home & Living", "name": "Mini electric rice cooker 1.8L non-stick", "notes": "1.8L, non-stick, kecil sesuai bujang atau rumah sewa", "price": "17.98", "rank": 2, "search": "mini rice cooker 1.8L", "style": "santai", "why": "160K+ sold; under RM20", "id": "s02"}, {"cat": "Home & Living", "name": "Capsule cutter / chopper blender 900ml", "notes": "Cincang bawang, cili, daging dalam beberapa saat, 900ml", "price": "29.90", "rank": 3, "search": "capsule cutter chopper 900ml", "style": "review", "why": "368K+ sold; one of the biggest-selling small kitchen items", "id": "s03"}, {"cat": "Home & Living", "name": "Home fragrance diffuser", "notes": "Bagi rumah sentiasa wangi, sesuai ruang tamu dan bilik", "price": "22.19", "rank": 4, "search": "home fragrance diffuser", "style": "santai", "why": "#1 by 7-day orders on TikTok MY (6.7K in a week)", "id": "s04"}, {"cat": "Home & Living", "name": "360° spray mop", "notes": "Mop spray 360 darjah, tak payah baldi, senang lap bawah sofa", "price": "33.20", "rank": 5, "search": "spray mop 360", "style": "promo", "why": "20K sold, 16K+ reviews; often ~60% off", "id": "s05"}, {"cat": "Home & Living", "name": "Portable USB-C blender 450ml", "notes": "Boleh cas USB-C, 450ml, buat smoothie di office atau gym", "price": "15.19", "rank": 6, "search": "portable blender 450ml type c", "style": "hype", "why": "4.8K orders in a week; very cheap", "id": "s06"}, {"cat": "Home & Living", "name": "Rechargeable handheld milk frother", "notes": "Buat latte dan matcha berbuih di rumah, 3 kelajuan, cas USB", "price": "9.30", "rank": 7, "search": "rechargeable milk frother", "style": "santai", "why": "Under RM10 café-at-home gadget", "id": "s07"}, {"cat": "Home & Living", "name": "Fitted bedsheet set 4-in-1", "notes": "Cadar fitted getah keliling, 4 dalam 1, tak lari bila tidur", "price": "24.90", "rank": 8, "search": "fitted bedsheet 4 in 1", "style": "review", "why": "8K sold, 4.9 rating", "id": "s08"}, {"cat": "Home & Living", "name": "Corner edge guards (16 pcs)", "notes": "Pelindung bucu meja untuk anak kecil, 16 keping, murah gila", "price": "0.51", "rank": 9, "search": "corner guard 16pcs", "style": "santai", "why": "100K+ sold; impulse buy for parents", "id": "s09"}, {"cat": "Home & Living", "name": "Hanging facial tissue 4-ply (9 packs)", "notes": "Tisu gantung 4 lapis, 9 pek, gantung tepi dinding jimat ruang", "price": "9.89", "rank": 10, "search": "hanging tissue 4 ply 9 pack", "style": "promo", "why": "10K sold, 4.9 rating; often ~60% off", "id": "s10"}, {"cat": "Home & Living", "name": "Crystal-look glass storage jars (3 pcs)", "notes": "Balang kaca nampak macam kristal, set 3, cantik untuk dapur atau simpan kuih raya", "price": "16.90", "rank": 11, "search": "crystal glass storage jar set 3", "style": "santai", "why": "Pretty kitchen storage; good for aesthetic posts", "id": "s11"}, {"cat": "Home & Living", "name": "5-ply hanging tissue (6 packs)", "notes": "Tisu gantung 5 lapis, 6 pek besar, tebal dan lembut", "price": "26.18", "rank": 12, "search": "hanging tissue 5 ply 6 pack", "style": "promo", "why": "10K sold; bulk value, often ~60% off", "id": "s12"}, {"cat": "Home & Living", "name": "Blender grinder 350W 1L", "notes": "Blender 1 liter, boleh kisar sambal dan buat jus", "price": "23.40", "rank": 13, "search": "blender grinder 350W 1000ml", "style": "review", "why": "41K+ sold; 2.5K orders in a week", "id": "s13"}, {"cat": "Home & Living", "name": "Stainless steel meat grinder 2L", "notes": "Pengisar daging 2L, mangkuk stainless steel, kisar daging dan bawang laju", "price": "20.90", "rank": 14, "search": "meat grinder 2L stainless steel", "style": "hype", "why": "44K+ sold; 2.3K orders in a week", "id": "s14"}, {"cat": "Home & Living", "name": "Portable LED mosquito trap", "notes": "Perangkap nyamuk lampu UV, ada pemegang untuk gantung, sesuai balkoni", "price": "8.33", "rank": 15, "search": "LED mosquito trap portable", "style": "santai", "why": "Under RM10; useful for balconies and camping", "id": "s15"}, {"cat": "Home & Living", "name": "Dishwashing liquid travel pack 92g", "notes": "Sabun basuh pinggan saiz kecil, senang bawa travel atau camping", "price": "0.90", "rank": 16, "search": "sunlight 92g", "style": "santai", "why": "40K+ sold in a week; super-cheap add-on", "id": "s16"}, {"cat": "Furniture", "name": "Foldable storage bench 110L", "notes": "Bangku boleh duduk dan simpan barang, 110L, boleh lipat bila tak guna", "price": "30.01", "rank": 201, "search": "foldable storage bench 110L", "style": "hype", "why": "#1 furniture on TikTok MY; 107K+ sold, 7.4K in a week", "id": "f01"}, {"cat": "Furniture", "name": "Foldable camping chair", "notes": "Kerusi lipat ringan, sesuai camping, memancing atau lepak depan rumah", "price": "31.00", "rank": 202, "search": "kerusi lipat camping", "style": "santai", "why": "13K+ sold; 2.7K in a week", "id": "f02"}, {"cat": "Furniture", "name": "Stainless steel dish drying rack (2/3 tier)", "notes": "Rak pinggan stainless steel 2 atau 3 tingkat, tak berkarat, jimat ruang sinki", "price": "67.59", "rank": 203, "search": "rak pinggan stainless steel 3 tier", "style": "review", "why": "108K+ sold; higher price means more commission", "id": "f03"}, {"cat": "Furniture", "name": "Storage cabinet 50-70cm", "notes": "Kabinet simpanan bercorak bunga, beberapa saiz, kemas barang bilik dan ruang tamu", "price": "112.50", "rank": 204, "search": "storage cabinet drawer plastic", "style": "promo", "why": "14.8K sold; big-ticket item for bigger commission", "id": "f04"}, {"cat": "Furniture", "name": "Steel shoe cabinet", "notes": "Rak kasut rangka besi, kalis air dan habuk, senang lap, banyak saiz", "price": "", "rank": 205, "search": "steel shoe cabinet", "style": "review", "why": "Recommended for small Malaysian condos", "id": "f05"}, {"cat": "Furniture", "name": "4-tier corner shelf", "notes": "Rak sudut 4 tingkat, ada ruang terbuka dan tertutup, guna sudut yang selalu kosong", "price": "", "rank": 206, "search": "4 tier corner shelf", "style": "santai", "why": "Space-saving pick for small homes", "id": "f06"}, {"cat": "Furniture", "name": "Folding storage stool (linen)", "notes": "Stool boleh duduk dan simpan barang, kain linen kalis air, ada span lembut, boleh lipat", "price": "", "rank": 207, "search": "folding storage stool linen", "style": "santai", "why": "Seat plus storage; folds flat", "id": "f07"}, {"cat": "Furniture", "name": "Foldable study desk with wheels", "notes": "Meja lipat ada roda, rangka besi, tahan 150kg, sesuai WFH atau budak sekolah", "price": "", "rank": 208, "search": "foldable study desk wheels", "style": "review", "why": "Popular for WFH and students; holds up to 150kg", "id": "f08"}, {"id": "t01", "rank": 301, "cat": "TikTok Shop", "source": "tiktok", "name": "Hotel-style pillow 1kg", "price": "8.72", "why": "1.49M sold on TikTok Shop; 15K in a week", "notes": "Bantal ala hotel, 1kg, lembut dan gebu, tidur lena", "style": "santai", "search": "bantal hotel 1kg"}, {"id": "t02", "rank": 302, "cat": "TikTok Shop", "source": "tiktok", "name": "7-in-1 queen comforter set", "price": "49.99", "why": "19.8K sold in one week", "notes": "Set comforter queen 7 dalam 1, getah keliling, lembut", "style": "promo", "search": "comforter set queen 7in1"}, {"id": "t03", "rank": 303, "cat": "TikTok Shop", "source": "tiktok", "name": "Printed pillowcase", "price": "1.47", "why": "1.14M sold; under RM2", "notes": "Sarung bantal bercorak, murah, tukar mood bilik", "style": "promo", "search": "sarung bantal corak"}, {"id": "t04", "rank": 304, "cat": "TikTok Shop", "source": "tiktok", "name": "Semi-blackout hook curtain", "price": "3.33", "why": "560K sold; 10K in a week", "notes": "Langsir cangkuk kain tebal, semi blackout, senang pasang", "style": "review", "search": "langsir cangkuk semi blackout"}, {"id": "t05", "rank": 305, "cat": "TikTok Shop", "source": "tiktok", "name": "3D carpet 120 x 180cm", "price": "17.48", "why": "160K sold; fits small living rooms", "notes": "Karpet 3D saiz 4x6 kaki, sesuai ruang tamu kecil", "style": "santai", "search": "karpet 3D 120x180"}, {"id": "t06", "rank": 306, "cat": "TikTok Shop", "source": "tiktok", "name": "Fitted bedsheet set", "price": "7.49", "why": "439K sold; single to queen", "notes": "Cadar fitted bercorak, single dan queen, getah keliling", "style": "promo", "search": "cadar fitted bercorak"}, {"id": "t07", "rank": 307, "cat": "TikTok Shop", "source": "tiktok", "name": "Lumbar back cushion for chair", "price": "19.98", "why": "97K sold; 11K in a week", "notes": "Kusyen pinggang untuk kerusi, kurang sakit belakang masa duduk lama", "style": "review", "search": "kusyen pinggang kerusi"}, {"id": "t08", "rank": 308, "cat": "TikTok Shop", "source": "tiktok", "name": "Home fragrance diffuser", "price": "22.19", "why": "#1 home appliance by weekly orders; 102K sold", "notes": "Bagi rumah sentiasa wangi, sesuai ruang tamu dan bilik", "style": "hype", "search": "diffuser wangian rumah"}, {"id": "t09", "rank": 309, "cat": "TikTok Shop", "source": "tiktok", "name": "Cordless vacuum with mop pad", "price": "35.95", "why": "175K sold on TikTok Shop", "notes": "Wireless, ada pad mop, sedut habuk dan lap lantai sekali jalan", "style": "hype", "search": "vacuum cordless mop"}, {"id": "t10", "rank": 310, "cat": "TikTok Shop", "source": "tiktok", "name": "Portable USB-C blender 450ml", "price": "15.19", "why": "4.8K orders in a week", "notes": "Boleh cas USB-C, 450ml, buat smoothie di office atau gym", "style": "hype", "search": "portable blender type c"}, {"id": "t11", "rank": 311, "cat": "TikTok Shop", "source": "tiktok", "name": "Mini rice cooker 1.8L", "price": "17.98", "why": "160K sold on TikTok Shop", "notes": "1.8L, non-stick, kecil sesuai bujang atau rumah sewa", "style": "santai", "search": "rice cooker mini 1.8L"}, {"id": "t12", "rank": 312, "cat": "TikTok Shop", "source": "tiktok", "name": "Capsule chopper 900ml", "price": "29.90", "why": "368K sold; top kitchen seller", "notes": "Cincang bawang, cili, daging dalam beberapa saat, 900ml", "style": "review", "search": "capsule cutter chopper"}, {"id": "t13", "rank": 313, "cat": "TikTok Shop", "source": "tiktok", "name": "Foldable storage bench 110L", "price": "30.01", "why": "#1 furniture on TikTok Shop MY; 107K sold", "notes": "Bangku boleh duduk dan simpan barang, 110L, boleh lipat", "style": "hype", "search": "storage bench foldable 110L"}, {"id": "t14", "rank": 314, "cat": "TikTok Shop", "source": "tiktok", "name": "Stainless dish drying rack", "price": "67.59", "why": "108K sold; bigger commission per sale", "notes": "Rak pinggan stainless steel 2 atau 3 tingkat, tak berkarat", "style": "review", "search": "rak pinggan stainless steel"}, {"id": "t15", "rank": 315, "cat": "TikTok Shop", "source": "tiktok", "name": "Foldable camping chair", "price": "31.00", "why": "13K sold; 2.7K in a week", "notes": "Kerusi lipat ringan, sesuai camping, memancing atau lepak", "style": "santai", "search": "kerusi lipat camping"}];
+const LIMIT = 500;
+const $ = s => document.querySelector(s);
+const ui = {}; const selected = new Set();
+const native = window.Android || null;
+
+/* ---------- storage (on this phone) ---------- */
+const KEY = "rak.products.v1";
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) return JSON.parse(raw);
+  }catch{}
+  return SEED_PRODUCTS.slice();
+}
+let products = load();
+/* give every product a number (older installs had none); keep the seed numbers so they match the bio page */
+(function migrate(){
+  const seedNum = {}; SEED_PRODUCTS.forEach(p=>seedNum[p.id]=p.num);
+  products.forEach(p=>{ if(!p.num && seedNum[p.id]) p.num=seedNum[p.id]; if(!p.source) p.source="shopee"; });
+  let n = products.reduce((m,p)=>Math.max(m,p.num||0),0);
+  products.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(p=>{ if(!p.num) p.num=++n; });
+})();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(products)); return true; }catch{ toast("Couldn't save on this phone. Storage may be full."); return false; } }
+save();
+function sorted(){ return products.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
+function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+
+/* ---------- helpers ---------- */
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+let toastT; function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,2600); }
+async function copyText(t){
+  if(native && native.copy){ native.copy(t); return true; }
+  try{ await navigator.clipboard.writeText(t); return true; }catch{ return false; }
+}
+function openUrl(u){ if(native && native.openUrl) native.openUrl(u); else window.open(u,"_blank"); }
+function shareText(t){
+  if(native && native.share){ native.share(t); return true; }
+  if(navigator.share){ navigator.share({text:t}).catch(()=>{}); return true; }
+  return false;
+}
+
+/* ---------- offline Malay caption writer ---------- */
+const HOOKS = {
+  santai:["Siapa lagi rasa benda ni patut ada kat rumah dari dulu? 😅","Benda kecil je, tapi hidup terus jadi senang 🤭","Korang pernah beli something, lepas tu menyesal kenapa tak beli awal? 🙈","Aku tak sangka benda macam ni boleh jadi favourite aku 😂","Ni antara barang yang orang rumah paling suka guna 😆","Rumah kemas, hati pun tenang. Setuju tak? 😌"],
+  review:["Jujur review: berbaloi ke beli benda ni? 🤔","Dah lama survey, akhirnya jumpa yang ni 👀","Ramai tanya pasal ni, so aku share terus 👇","Nak tahu kenapa ramai beli benda ni? 🧐","Sebelum beli yang mahal, tengok yang ni dulu 👇","Aku cari yang simple tapi berguna. Jumpa ni 👇"],
+  hype:["KORANG KENA TENGOK NI 😳","Serius, kenapa baru sekarang aku jumpa benda ni?! 🤯","Benda ni tengah naik, dan aku faham kenapa 🔥","Stop scroll kejap, yang ni memang best 😍","Tak expect barang murah boleh se-best ni 😭","Ni bukan biasa-biasa. Tengok dulu 👀"],
+  promo:["Bajet ketat tapi nak barang berguna? Ni dia 👇","Murah, berguna, terus masuk troli 🛒","Gaji dah masuk? Ni antara barang paling berbaloi 💰","Cari barang rumah bawah bajet? Tengok ni 👇","Harga mesra poket, guna hari-hari 💸","Nak upgrade rumah tanpa pecah tabung? 👇"]
+};
+const INTRO = ["{n} ni:","Ni {n}.","Kenalkan, {n} 👇","{n}, dan ni sebab dia best:"];
+const PRICE = ["Harga RM{p} je.","Cuma RM{p}.","RM{p} je, berbaloi.","Harga sekarang RM{p} (harga boleh berubah)."];
+const CLOSE = {
+  santai:["Link aku letak bawah ni 👇","Nak tengok? Link kat bawah 👇"],
+  review:["Details penuh dalam link 👇","Check sendiri kat link bawah 👇"],
+  hype:["Tengok sendiri kat link 👇","Link bawah ni, jangan tak tengok 👇"],
+  promo:["Check harga terkini kat link 👇","Harga & stok boleh berubah, check dulu 👇"]
+};
+const FALLBACK = ["Simple, berguna, sesuai untuk rumah korang.","Senang guna, jimat masa, rumah pun nampak kemas."];
+function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+function writeCaption(p, avoidHook){
+  const style = HOOKS[p.style] ? p.style : "santai";
+  let hooks = HOOKS[style].filter(h=>h!==avoidHook); if(!hooks.length) hooks=HOOKS[style];
+  const hook = rnd(hooks);
+  const feats = (p.notes||"").split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,4);
+  const lines = [hook, ""];
+  lines.push(rnd(INTRO).replace("{n}", p.name));
+  if(feats.length) feats.forEach(f=>lines.push("✅ "+f.charAt(0).toUpperCase()+f.slice(1)));
+  else lines.push(rnd(FALLBACK));
+  if(p.price){ lines.push(""); lines.push(rnd(PRICE).replace("{p}", p.price)); }
+  lines.push(""); lines.push(rnd(CLOSE[style]));
+  let body = lines.join("\n");
+  const tail = p.source==="tiktok" ? `\n\n🛒 Ada kat TikTok Shop, tekan keranjang kuning dalam video TikTok aku` : `\n\n🛒 ${p.link}`;
+  const room = LIMIT - [...tail].length;
+  if([...body].length>room) body=[...body].slice(0,room-1).join("").trimEnd()+"…";
+  return {text: body+tail, hook};
+}
+
+/* ---------- TikTok mode: video plan + caption ---------- */
+const TT_HOOKS = {
+  santai:["Barang yang buat rumah aku terus senang 😅","POV: kau baru jumpa barang ni 🤭","Benda kecil, impak besar 😆","Siapa sangka benda ni berguna gila 😂"],
+  review:["Jujur review, berbaloi ke? 🤔","Aku test dulu, baru share 👀","Beli atau skip? Tengok sampai habis 👇","Review jujur, tak sponsor 🧐"],
+  hype:["KENAPA BARU SEKARANG AKU JUMPA NI 🤯","Stop scroll. Tengok ni 😳","Benda ni memang lain macam 🔥","Tak expect murah boleh se-best ni 😭"],
+  promo:["Barang rumah bawah bajet 💸","Murah tapi guna hari-hari 🛒","Upgrade rumah tanpa pecah tabung 💰","Bajet ketat? Ni pilihan bijak 👇"]
+};
+const TT_TAGS = ["#fyp","#barangrumah","#racunshopee","#homefinds","#rumahkemas","#shopeemy","#ideasrumah","#barangviral"];
+function ttCta(p){ return p.source==="tiktok" ? "Tekan keranjang kuning 🛒" : `Produk #${p.num} 👉 link dalam bio`; }
+function writeTikTok(p, avoidHook){
+  const style = TT_HOOKS[p.style] ? p.style : "santai";
+  let hooks = TT_HOOKS[style].filter(h=>h!==avoidHook); if(!hooks.length) hooks=TT_HOOKS[style];
+  const hook = rnd(hooks);
+  const feats = (p.notes||"").split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,3);
+  const cap = (s)=>s.charAt(0).toUpperCase()+s.slice(1);
+  const plan = [
+    `0–3s  HOOK`,
+    `  Film: the problem (messy spot, old item) or a close-up of the product`,
+    `  On-screen text: ${hook}`,
+    ``,
+    `3–7s  SHOW IT`,
+    `  Film: unbox or reveal ${p.name}`,
+    `  On-screen text: ${p.name}${p.price?` · RM${p.price}`:""}`,
+    ``
+  ];
+  if(feats.length){
+    plan.push(`7–${7+feats.length*4}s  WHY IT'S GOOD`);
+    feats.forEach(f=>{ plan.push(`  Film: a shot that shows "${f}"`); plan.push(`  On-screen text: ✅ ${cap(f)}`); });
+  } else {
+    plan.push(`7–15s  USE IT`, `  Film: using it at home, 2–3 quick shots`, `  On-screen text: ✅ Senang guna`);
+  }
+  plan.push(``, `END  CALL TO ACTION`, `  Film: point at the screen or hold the product up`, `  On-screen text: ${ttCta(p)}`,
+    ``, `Tips: 15–25s total, no voiceover needed, add a trending sound in TikTok.`);
+  const pool = p.source==="tiktok" ? ["#fyp","#barangrumah","#homefinds","#rumahkemas","#tiktokshopmy","#keranjangkuning","#barangviral"] : TT_TAGS;
+  const tags = [...pool].sort(()=>Math.random()-.5).slice(0,5).join(" ");
+  const line = feats.length ? cap(feats[0])+(feats[1]?", "+feats[1]:"")+"." : "Simple tapi berguna.";
+  const caption = `${hook}\n${line}${p.price?` RM${p.price} je.`:""}\n\n${ttCta(p)}\n\n${tags}`;
+  return {plan: plan.join("\n"), caption, hook};
+}
+function nextNum(){ return products.reduce((m,p)=>Math.max(m,p.num||0),0)+1; }
+function ensureTikTok(p){ if(!p.tt){ const t=writeTikTok(p); p.tt={plan:t.plan,caption:t.caption,hook:t.hook}; } }
+
+/* ---------- today's picks ---------- */
+let sugCat="", copied="";
+const PER_DAY = 5;
+function todayKey(){ try{ return new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kuala_Lumpur"}); }catch{ return new Date().toISOString().slice(0,10); } }
+let salt = 0;
+try{ const v=JSON.parse(localStorage.getItem("shuffle")||"null"); if(v&&v.day===todayKey()) salt=v.salt; }catch{}
+function seeded(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return ()=>{ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
+function pickToday(list){ const r=seeded(todayKey()+"|"+sugCat+"|"+salt); const a=[...list];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a.slice(0,PER_DAY); }
+function renderSug(){
+  const el=$("#sugList");
+  const key = (n,src)=>(n||"").toLowerCase()+"|"+(src||"shopee");
+  const added = new Set(products.map(p=>key(p.name,p.source)));
+  const cats=[...new Set(SUGGESTIONS.map(s=>s.cat||"Other"))];
+  if(!cats.includes(sugCat)) sugCat=cats[0];
+  $("#sugCats").innerHTML = cats.map(c=>`<button type="button" role="tab" data-cat="${esc(c)}" aria-selected="${c===sugCat}">${esc(c)}</button>`).join("");
+  $("#sugCats").hidden = cats.length<2;
+  const pool = SUGGESTIONS.filter(s=>(s.cat||"Other")===sugCat);
+  const fresh = pool.filter(s=>!added.has(key(s.name,s.source)));
+  const isTT = pool[0] && pool[0].source==="tiktok";
+  $("#sugNote").innerHTML = isTT
+    ? "Selling well on TikTok Shop. Tap <b>Copy for TikTok</b>, open TikTok → <b>Shop</b>, paste into search, then <b>Add to showcase</b>. Then tap <b>Use this</b>. No link needed."
+    : "Trending, low-price picks. A new set every day. Tap <b>Copy for Shopee</b>, search it in the Shopee app, copy your affiliate link, then tap <b>Use this</b> and paste the link.";
+  const shown = pickToday(fresh.length>=PER_DAY?fresh:pool);
+  $("#sugCount").textContent = shown.length+" of "+pool.length;
+  $("#shuffleBtn").hidden = pool.length<=PER_DAY;
+  el.innerHTML = shown.map(s=>`<div class="sug ${added.has(key(s.name,s.source))?"used":""}">
+    <div><b>${esc(s.name)}</b>${s.price?`<span class="sprice">~RM ${esc(s.price)}</span>`:'<span class="sprice">check price</span>'}</div>
+    <div class="why">${esc(s.why)}</div>
+    <div class="sbtns"><button type="button" data-sug="${esc(s.id)}">Use this</button><button type="button" class="copyq" data-sid="${esc(s.id)}" data-q="${esc(s.search||s.name)}">${s.source==="tiktok"?"Copy for TikTok":"Copy for Shopee"}</button></div>
+    ${copied===s.id?`<div class="why" style="grid-column:1 / -1;color:var(--good)">Copied. Open ${s.source==="tiktok"?"TikTok → Shop":"the Shopee app"} and paste it into search.</div>`:""}
+  </div>`).join("");
+}
+$("#shuffleBtn").addEventListener("click",()=>{ salt++; copied=""; try{localStorage.setItem("shuffle",JSON.stringify({day:todayKey(),salt}));}catch{} renderSug(); });
+$("#sugCats").addEventListener("click",ev=>{const b=ev.target.closest("button[data-cat]"); if(!b) return; sugCat=b.dataset.cat; copied=""; renderSug();});
+$("#sugList").addEventListener("click",async ev=>{
+  const c=ev.target.closest("button.copyq");
+  if(c){ if(await copyText(c.dataset.q)){ copied=c.dataset.sid; renderSug(); } else { c.textContent=c.dataset.q; } return; }
+  const b=ev.target.closest("button[data-sug]"); if(!b) return;
+  const s=SUGGESTIONS.find(x=>x.id===b.dataset.sug); if(!s) return;
+  $("#fName").value=s.name; $("#fPrice").value=s.price||""; $("#fNotes").value=s.notes||""; $("#fStyle").value=s.style||"santai";
+  $("#fLink").value=""; $("#fSource").value=s.source==="tiktok"?"tiktok":"shopee"; syncSource(); showForm("");
+  $("#addForm").scrollIntoView({behavior:"smooth",block:"start"});
+  (s.source==="tiktok"?$("#addBtn"):$("#fLink")).focus({preventScroll:true});
+});
+
+/* ---------- products ---------- */
+function showForm(t){const m=$("#formMsg"); m.textContent=t; m.hidden=!t;}
+function setMsg(id,ok,t){ ui[id]={...(ui[id]||{}), msg:t?{ok,t}:null}; render(); }
+
+function render(){
+  const list=$("#list"), items=sorted();
+  $("#count").textContent = items.length ? items.length+(items.length===1?" product":" products") : "";
+  for(const id of [...selected]) if(!products.some(p=>p.id===id)) selected.delete(id);
+  if(!items.length){ list.innerHTML='<div class="empty"><strong>No products yet</strong>Fill in the form above, or tap Use this on one of today\'s picks.</div>'; renderBar(); return; }
+  const fd=document.activeElement && document.activeElement.dataset || {};
+  const focused=fd.cap, focusedTT=fd.ttcap;
+  let changed=false; items.forEach(p=>{ if(!p.tt){ ensureTikTok(p); changed=true; } }); if(changed) save();
+  list.innerHTML = items.map(card).join("");
+  list.querySelectorAll("textarea[data-cap]").forEach(t=>{
+    updCount(t);
+    t.addEventListener("input",()=>{ updCount(t); const p=products.find(x=>x.id===t.dataset.cap); if(p){ p.caption=t.value; save(); } });
+    if(focused===t.dataset.cap) t.focus();
+  });
+  list.querySelectorAll("textarea[data-ttcap]").forEach(t=>{
+    t.addEventListener("input",()=>{ const p=products.find(x=>x.id===t.dataset.ttcap); if(p&&p.tt){ p.tt.caption=t.value; save(); } });
+    if(focusedTT===t.dataset.ttcap) t.focus();
+  });
+  list.querySelectorAll("details[data-tt]").forEach(d=>d.addEventListener("toggle",()=>{ const id=d.dataset.tt; ui[id]={...(ui[id]||{}),ttOpen:d.open}; }));
+  renderBar();
+}
+function card(p){
+  const st=ui[p.id]||{};
+  const onTh=p.status==="queued", onTt=!!p.ttPostedAt;
+  const isTT=p.source==="tiktok";
+  return `<article class="card">
+    <div class="card-top"><label class="pick"><input type="checkbox" data-sel="${esc(p.id)}" ${selected.has(p.id)?"checked":""}><h3>${isTT?"":`<span class="num">#${esc(p.num)}</span>`}${esc(p.name)}</h3></label>
+      <div class="pills"><span class="pill ${onTh?"queued":"off"}">Threads${onTh?" ✓":""}</span><span class="pill ${onTt?"queued":"off"}">TikTok${onTt?" ✓":""}</span></div></div>
+    <div class="meta">${p.price?`<span class="price">RM ${esc(p.price)}</span>`:""}${isTT?'<span class="src">TikTok Shop · yellow basket</span>':`<a href="${esc(p.link)}">${esc(p.link)}</a>`}</div>
+    <textarea class="caption" id="cap-${esc(p.id)}" data-cap="${esc(p.id)}" aria-label="Caption for ${esc(p.name)}">${esc(p.caption||"")}</textarea>
+    <div class="cap-foot"><span id="cnt-${esc(p.id)}"></span>${p.queuedAt?`<span>Posted ${new Date(p.queuedAt).toLocaleString("en-MY",{dateStyle:"medium",timeStyle:"short"})}</span>`:""}</div>
+    <div class="actions">
+      <button type="button" class="primary" data-act="threads" data-id="${esc(p.id)}">Post to Threads</button>
+      <button type="button" data-act="share" data-id="${esc(p.id)}">Share</button>
+      <button type="button" data-act="regen" data-id="${esc(p.id)}">Rewrite</button>
+      <button type="button" data-act="copy" data-id="${esc(p.id)}">Copy</button>
+      <button type="button" class="del" data-act="del" data-id="${esc(p.id)}">${st.confirmDel?"Yes, delete":"Delete"}</button>
+    </div>
+    ${st.msg?`<div class="msg ${st.msg.ok?"ok":"err"}">${esc(st.msg.t)}</div>`:""}
+    <details class="tt" data-tt="${esc(p.id)}" ${ui[p.id]?.ttOpen?"open":""}>
+      <summary>TikTok video plan &amp; caption</summary>
+      <div class="plan">${esc(p.tt?.plan||"")}</div>
+      <textarea class="ttcap" data-ttcap="${esc(p.id)}" aria-label="TikTok caption for ${esc(p.name)}">${esc(p.tt?.caption||"")}</textarea>
+      <div class="actions" style="margin-top:8px">
+        <button type="button" class="primary" data-act="ttcopy" data-id="${esc(p.id)}">Copy caption &amp; open TikTok</button>
+        <button type="button" data-act="ttregen" data-id="${esc(p.id)}">New idea</button>
+        <button type="button" data-act="ttdone" data-id="${esc(p.id)}">${onTt?"Unmark TikTok":"Mark posted on TikTok"}</button>
+      </div>
+      ${st.ttmsg?`<div class="msg ok" style="margin-top:8px">${esc(st.ttmsg)}</div>`:""}
+    </details>
+  </article>`;
+}
+function updCount(t){
+  const n=[...t.value].length, el=document.getElementById("cnt-"+t.dataset.cap);
+  if(el){ el.textContent=n+" / "+LIMIT+" characters"; el.classList.toggle("over",n>LIMIT); }
+}
+function captionOf(id){ const t=document.getElementById("cap-"+id); return (t?t.value:(products.find(p=>p.id===id)||{}).caption||"").trim(); }
+function markPosted(id){ const p=products.find(x=>x.id===id); if(p){ p.status="queued"; p.queuedAt=Date.now(); save(); } }
+function postThreads(id){
+  const text=captionOf(id);
+  if(!text){ setMsg(id,false,"The caption is empty. Tap Rewrite or type one first."); return false; }
+  if([...text].length>LIMIT){ setMsg(id,false,`Caption is ${[...text].length} characters. Shorten it to under ${LIMIT} first.`); return false; }
+  openUrl("https://www.threads.net/intent/post?text="+encodeURIComponent(text));
+  markPosted(id); ui[id]={...(ui[id]||{}),msg:{ok:true,t:"Opened Threads. Check it there and tap Post."}}; render(); return true;
+}
+
+$("#addForm").addEventListener("submit", ev=>{
+  ev.preventDefault(); showForm("");
+  const name=$("#fName").value.trim(), link=$("#fLink").value.trim();
+  const price=$("#fPrice").value.trim().replace(/^RM\s*/i,""), notes=$("#fNotes").value.trim(), style=$("#fStyle").value;
+  const source=$("#fSource").value;
+  if(!name){ showForm("Type the product name."); return; }
+  if(source==="shopee"){
+    if(!/^https?:\/\/\S+$/i.test(link)){ showForm("The link must start with https://. In the Shopee app tap Share → Copy link."); return; }
+    if(!/shopee|shp\.ee/i.test(link)){ showForm("This isn't a Shopee link. Use your Shopee affiliate link so the commission is tracked."); return; }
+  }
+  const p={id:newId(),name,link:source==="shopee"?link:"",price,notes,style,source,num:nextNum(),status:"draft",createdAt:Date.now()};
+  const c=writeCaption(p); p.caption=c.text; p.hook=c.hook; ensureTikTok(p);
+  if(source==="shopee") bioDirty(true);
+  products.push(p);
+  if(save()){ $("#addForm").reset(); render(); renderSug(); toast("Added. Caption is ready below."); document.getElementById("cap-"+p.id)?.scrollIntoView({behavior:"smooth",block:"center"}); }
+});
+
+$("#list").addEventListener("change", ev=>{
+  const c=ev.target.closest("input[data-sel]"); if(!c) return;
+  if(c.checked) selected.add(c.dataset.sel); else selected.delete(c.dataset.sel);
+  renderBar();
+});
+$("#list").addEventListener("click", async ev=>{
+  const a=ev.target.closest(".meta a"); if(a){ ev.preventDefault(); openUrl(a.getAttribute("href")); return; }
+  const b=ev.target.closest("button[data-act]"); if(!b) return;
+  const id=b.dataset.id, act=b.dataset.act, p=products.find(x=>x.id===id); if(!p) return;
+  if(act!=="del" && ui[id]?.confirmDel) ui[id].confirmDel=false;
+  if(act==="threads"){ postThreads(id); return; }
+  if(act==="share"){
+    const text=captionOf(id);
+    if(shareText(text)){ markPosted(id); setMsg(id,true,"Pick Buffer to queue it, or any app you like."); }
+    else setMsg(id,false,"Sharing isn't available here. Tap Copy instead.");
+    return;
+  }
+  if(act==="ttcopy"){
+    const text=(p.tt?.caption||"").trim();
+    const ok=await copyText(text);
+    ui[id]={...(ui[id]||{}),ttOpen:true,ttmsg: ok?"Caption copied. Film the plan in TikTok, then paste the caption when posting.":"Select the caption and copy it."};
+    openUrl("https://www.tiktok.com/");
+    render(); return;
+  }
+  if(act==="ttregen"){ const t=writeTikTok(p,p.tt?.hook); p.tt={plan:t.plan,caption:t.caption,hook:t.hook}; save(); ui[id]={...(ui[id]||{}),ttOpen:true,ttmsg:null}; render(); return; }
+  if(act==="ttdone"){ p.ttPostedAt = p.ttPostedAt ? null : Date.now(); save(); ui[id]={...(ui[id]||{}),ttOpen:true,ttmsg:null}; render(); return; }
+  if(act==="regen"){ const c=writeCaption(p,p.hook); p.caption=c.text; p.hook=c.hook; save(); ui[id]={...(ui[id]||{}),msg:null}; render(); return; }
+  if(act==="copy"){
+    if(await copyText(captionOf(id))) setMsg(id,true,"Caption copied.");
+    else { const t=document.getElementById("cap-"+id); t.focus(); t.select(); setMsg(id,true,"Caption selected. Use Copy on your keyboard."); }
+    return;
+  }
+  if(act==="del"){
+    if(!ui[id]?.confirmDel){ ui[id]={...(ui[id]||{}),confirmDel:true}; render(); return; }
+    if(p.source!=="tiktok") bioDirty(true);
+    products=products.filter(x=>x.id!==id); delete ui[id]; selected.delete(id); save(); render(); renderSug();
+  }
+});
+
+/* ---------- tick & post one by one ---------- */
+function renderBar(){
+  const n=selected.size;
+  $("#bulkBar").hidden = n===0;
+  $("#bulkTxt").textContent = n+" selected";
+  $("#bulkNext").textContent = n>1 ? "Post next to Threads ("+n+" left)" : "Post to Threads";
+}
+$("#bulkClear").addEventListener("click",()=>{ selected.clear(); render(); });
+$("#bulkNext").addEventListener("click",()=>{
+  const next=sorted().find(p=>selected.has(p.id)); if(!next) return;
+  if(postThreads(next.id)){ selected.delete(next.id); render(); if(selected.size) toast("After posting, come back and tap Post next."); }
+});
+
+/* ---------- backup ---------- */
+$("#backupBtn").addEventListener("click", async ()=>{
+  const data=JSON.stringify({app:"rak-affiliate",v:1,products});
+  if(!shareText(data)){ if(await copyText(data)) toast("Backup copied. Paste it somewhere safe."); }
+});
+$("#restoreBtn").addEventListener("click",()=>{
+  const box=$("#restoreBox");
+  if(box.hidden){ box.hidden=false; box.focus(); return; }
+  try{
+    const d=JSON.parse(box.value.trim());
+    if(!d || !Array.isArray(d.products)) throw 0;
+    const have=new Set(products.map(p=>p.id)); let added=0;
+    d.products.forEach(p=>{ if(p && p.id && p.link && !have.has(p.id)){ if(!p.num) p.num=nextNum(); if(!p.source) p.source="shopee"; products.push(p); added++; } });
+    if(added) bioDirty(true);
+    save(); render(); renderSug(); box.value=""; box.hidden=true;
+    toast(added ? "Restored "+added+" products." : "Nothing new in that backup.");
+  }catch{ toast("That doesn't look like a Rak Affiliate backup."); }
+});
+
+/* ---------- form: Shopee vs TikTok Shop ---------- */
+function syncSource(){ $("#linkLabel").hidden = $("#fSource").value!=="shopee"; }
+$("#fSource").addEventListener("change", syncSource);
+$("#addForm").addEventListener("reset", ()=>setTimeout(syncSource,0));
+
+/* ---------- link-in-bio page (hosted on GitHub Pages, Pocket-web/shop) ---------- */
+const BIO_URL = "https://mirzan0693-dev.github.io/Pocket-web/shop/";
+const BIO_API = "https://api.github.com/repos/mirzan0693-dev/Pocket-web/contents/shop/products.json";
+$("#bioLink").textContent = BIO_URL;
+try{ $("#ghToken").value = localStorage.getItem("rak.ghToken")||""; }catch{}
+$("#ghToken").addEventListener("change",()=>{ try{ localStorage.setItem("rak.ghToken",$("#ghToken").value.trim()); }catch{} });
+function bioDirty(v){ try{ localStorage.setItem("rak.bioDirty", v?"1":""); }catch{} showBioStatus(); }
+function showBioStatus(t){
+  let dirty=false; try{ dirty=!!localStorage.getItem("rak.bioDirty"); }catch{}
+  $("#bioStatus").textContent = t || (dirty ? "You have changes not on the bio page yet." : "");
+}
+showBioStatus();
+$("#copyBio").addEventListener("click", async ()=>{ if(await copyText(BIO_URL)) toast("Bio link copied."); });
+$("#openBio").addEventListener("click", ()=>openUrl(BIO_URL));
+
+const httpWaiters = {};
+window.__rakHttp = (id,status,text)=>{ const w=httpWaiters[id]; if(w){ delete httpWaiters[id]; w({status,text}); } };
+function http(method,url,headers,body){
+  if(native && native.http){
+    return new Promise(res=>{ const id=newId(); httpWaiters[id]=res; native.http(id,method,url,JSON.stringify(headers||{}),body||""); });
+  }
+  return fetch(url,{method,headers,body:body||undefined}).then(async r=>({status:r.status,text:await r.text()})).catch(()=>({status:0,text:""}));
+}
+function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+$("#pushBio").addEventListener("click", async ()=>{
+  const token=$("#ghToken").value.trim();
+  try{ localStorage.setItem("rak.ghToken",token); }catch{}
+  if(!token){ showBioStatus("Paste your GitHub access key below first."); $("#ghToken").focus(); return; }
+  const btn=$("#pushBio"); btn.disabled=true; showBioStatus("Updating…");
+  const headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"};
+  try{
+    const cur=await http("GET",BIO_API,headers);
+    if(cur.status===401||cur.status===403){ showBioStatus("GitHub refused the access key. Make a new one with Contents: Read and write on Pocket-web."); return; }
+    let sha; if(cur.status===200){ try{ sha=JSON.parse(cur.text).sha; }catch{} }
+    else if(cur.status!==404){ showBioStatus(cur.status? "GitHub error "+cur.status+". Try again." : "No internet connection. Try again."); return; }
+    const list=products.filter(p=>p.source!=="tiktok" && p.link).sort((a,b)=>a.num-b.num).map(p=>({num:p.num,name:p.name,price:p.price||"",link:p.link}));
+    const json=JSON.stringify({updated:todayKey(),products:list},null,1);
+    const body=JSON.stringify({message:"Update bio page products ("+list.length+")",content:b64utf8(json),sha});
+    const put=await http("PUT",BIO_API,headers,body);
+    if(put.status===200||put.status===201){ bioDirty(false); showBioStatus("Updated with "+list.length+" products. It goes live in about a minute."); }
+    else if(put.status===409){ showBioStatus("The page changed at the same time. Tap Update again."); }
+    else showBioStatus(put.status===401||put.status===403 ? "GitHub refused the access key. It needs Contents: Read and write on Pocket-web." : "GitHub error "+put.status+". Try again.");
+  } finally { btn.disabled=false; }
+});
+
+render(); renderSug(); syncSource();
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>
